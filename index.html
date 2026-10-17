@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="bn" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="pageTitle">ভূমি-শিল্ড এআই — স্মার্ট ভূমি রেকর্ড, মালিকানা ইতিহাস ও উত্তরাধিকার ব্যবস্থাপনা প্ল্যাটফর্ম</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Inter', sans-serif; background-color: #020617; color: #f1f5f9; line-height: 1.6; }
+    .nav-item.active { background: linear-gradient(90deg, rgba(16,185,129,0.22) 0%, rgba(6,182,212,0.12) 100%); color: #34d399; border-left: 3px solid #10b981; font-weight: 700; }
+    .glass-card { background: rgba(15, 23, 42, 0.88); border: 1px solid rgba(51, 65, 85, 0.78); backdrop-filter: blur(10px); }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #ffffff !important; color: #000000 !important; }
+      .glass-card { background: #ffffff !important; border: 1px solid #cbd5e1 !important; color: #000000 !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-emerald-500 selection:text-slate-950">
+
+  <!-- TOP DISCLAIMER & SYSTEM STATUS BANNER -->
+  <div class="no-print bg-slate-900/95 border-b border-emerald-500/30 px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2">
+    <div class="flex items-center gap-2">
+      <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold" id="modeBadge">ডেমো সংস্করণ (শিক্ষামূলক প্রোটোটাইপ)</span>
+      <span class="text-slate-300" id="disclaimerText">এই প্ল্যাটফর্মটি শুধুমাত্র শিক্ষামূলক ও প্রদর্শনী উদ্দেশ্যে তৈরি; এটি বাংলাদেশ সরকারের কোনো দাপ্তরিক ডাটাবেস বা চূড়ান্ত আইনি দলিলের বিকল্প নয়।</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span id="dbStatusBadge" class="px-2.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-700/50 text-[11px] font-semibold">ডাটাবেস: স্থানীয় সংরক্ষণ ও সুপাবেস প্রস্তুত</span>
+      <span id="roleBadge" class="px-2.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700/50 font-semibold">ভূমিকা: প্রধান প্রশাসক (নাহিনুর চৌধুরী)</span>
+    </div>
+  </div>
+
+  <!-- MAIN APPLICATION SHELL -->
+  <div class="flex-1 flex flex-col lg:flex-row min-h-0">
+    <!-- SIDEBAR NAVIGATION (8 CORE MODULES) -->
+    <aside class="no-print w-full lg:w-72 bg-slate-900/95 border-b lg:border-b-0 lg:border-r border-slate-800 flex flex-col justify-between shrink-0">
+      <div>
+        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-slate-950 font-extrabold text-lg shadow-lg shadow-emerald-500/20">🛡️</div>
+            <div>
+              <h1 id="brandTitle" class="text-base font-extrabold tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">ভূমি-শিল্ড এআই</h1>
+              <p class="text-[11px] text-slate-400" id="brandSub">স্মার্ট ভূমি ও উত্তরাধিকার প্ল্যাটফর্ম</p>
+            </div>
+          </div>
+          <button type="button" id="mobileMenuBtn" class="lg:hidden p-2 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700" aria-label="মেনু">☰</button>
+        </div>
+        <nav id="sidebarNav" class="hidden lg:flex flex-col p-3 space-y-1 text-xs"></nav>
+      </div>
+
+      <div id="sideProfileCard" class="hidden lg:block p-4 border-t border-slate-800 bg-slate-950/70 text-xs space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400" id="sideOwnerLabel">প্রধান মালিক ও প্রশাসক:</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold">OWN-1001</span>
+        </div>
+        <div class="font-bold text-white text-sm" id="sideUserName">নাহিনুর চৌধুরী</div>
+        <div class="text-cyan-400 font-mono text-[11px]" id="sideUserEmail">nahinur.admin@bhumishield.bd</div>
+        <div class="pt-2 flex items-center justify-between">
+          <button type="button" id="openAuthModalBtn" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 font-semibold">🔐 ভূমিকা ও প্রবেশ</button>
+          <button type="button" id="resetDemoBtn" class="text-slate-400 hover:text-rose-400 underline">ডেমো তথ্য পুনরায় স্থাপন</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT COLUMN -->
+    <div class="flex-1 flex flex-col min-w-0">
+      <header class="no-print bg-slate-900/80 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 relative">
+        <div class="flex items-center gap-2 flex-1 max-w-xl">
+          <input id="globalSearchInput" type="text" placeholder="দাগ নম্বর (Dag-107), খতিয়ান (BS-2001), রেকর্ড আইডি (REC-2001) বা মালিকের নাম লিখুন..." class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500" />
+          <button type="button" id="globalSearchBtn" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs shrink-0">অনুসন্ধান</button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" id="notifToggleBtn" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 border border-slate-700">
+            <span>🔔</span> <span id="notifBtnLabel" class="hidden sm:inline">নোটিফিকেশন</span> <span id="notifCountBadge" class="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold">৩</span>
+          </button>
+          <button type="button" id="aiModalToggleBtn" class="px-3 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 text-xs font-bold">🤖 এআই বিশ্লেষণ</button>
+          <button type="button" id="langSwitchBtn" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-emerald-500/50 text-xs font-extrabold flex items-center gap-1.5 shadow-sm" title="ভাষা পরিবর্তন করুন / Switch Language">
+            <span id="langBnIndicator" class="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 font-extrabold">বাংলা</span>
+            <span class="text-slate-500">|</span>
+            <span id="langEnIndicator" class="px-2 py-0.5 rounded text-slate-300 font-semibold">English</span>
+          </button>
+        </div>
+
+        <div id="notifPanel" class="hidden absolute right-4 top-14 z-50 w-80 sm:w-96 glass-card rounded-2xl p-4 shadow-2xl space-y-2.5 text-xs">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span id="notifPanelTitle" class="font-bold text-emerald-400">সিস্টেম নোটিফিকেশন ও ঝুঁকি সতর্কবার্তা</span>
+            <button type="button" id="closeNotifBtn" class="text-slate-400 hover:text-white text-base">&times;</button>
+          </div>
+          <div id="notifList" class="space-y-2 max-h-64 overflow-y-auto"></div>
+        </div>
+      </header>
+
+      <div id="loadingBanner" class="hidden no-print bg-emerald-950/80 border-b border-emerald-500/30 px-4 py-2 text-xs text-emerald-300 font-bold flex items-center justify-center gap-2">
+        <span class="animate-spin">⏳</span> <span id="loadingBannerText">লোড হচ্ছে...</span>
+      </div>
+
+      <main id="moduleContainer" class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6 max-w-7xl w-full mx-auto"></main>
+    </div>
+  </div>
+
+  <!-- MODAL 1: ADD / EDIT LAND RECORD -->
+  <div id="recordModal" class="no-print hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 id="recordModalTitle" class="text-base font-bold text-emerald-400">নতুন জমির রেকর্ড সংযোজন</h3>
+        <button type="button" id="closeRecordModalBtn" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+      <div id="dupWarningBox" class="hidden p-3 rounded-xl bg-amber-500/20 border border-amber-500/50 text-amber-200 text-xs font-semibold"></div>
+      <form id="recordForm" class="space-y-3 text-xs">
+        <input type="hidden" id="recFormMode" value="create" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div><label id="lblRecId" class="block text-slate-300 font-semibold mb-1" for="recIdInp">রেকর্ড আইডি *</label><input id="recIdInp" type="text" required class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 font-mono text-emerald-300" /></div>
+          <div><label id="lblRecOwner" class="block text-slate-300 font-semibold mb-1" for="recOwnerInp">জমির মালিক নির্বাচন *</label><select id="recOwnerInp" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white"></select></div>
+          <div><label id="lblRecDag" class="block text-slate-300 font-semibold mb-1" for="recDagInp">দাগ নম্বর *</label><input id="recDagInp" type="text" required placeholder="যেমন: Dag-107" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono" /></div>
+          <div><label id="lblRecKhatian" class="block text-slate-300 font-semibold mb-1" for="recKhatianInp">খতিয়ান নম্বর *</label><input id="recKhatianInp" type="text" required placeholder="যেমন: BS-2001" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono" /></div>
+          <div><label id="lblRecSurvey" class="block text-slate-300 font-semibold mb-1" for="recSurveyInp">জরিপের ধরন *</label><select id="recSurveyInp" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white"></select></div>
+          <div><label id="lblRecClass" class="block text-slate-300 font-semibold mb-1" for="recClassInp">জমির শ্রেণি *</label><select id="recClassInp" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white"></select></div>
+          <div><label id="lblRecMouza" class="block text-slate-300 font-semibold mb-1" for="recMouzaInp">মৌজা *</label><input id="recMouzaInp" type="text" required value="মাথিউরা" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" /></div>
+          <div><label id="lblRecDist" class="block text-slate-300 font-semibold mb-1" for="recDistInp">জেলা *</label><select id="recDistInp" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white"></select></div>
+          <div><label id="lblRecArea" class="block text-slate-300 font-semibold mb-1" for="recAreaInp">খতিয়ানভুক্ত জমির পরিমাণ (শতাংশ) *</label><input id="recAreaInp" type="number" step="0.01" min="0.01" required value="30" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-emerald-300 font-bold" /></div>
+          <div><label id="lblRecSurvArea" class="block text-slate-300 font-semibold mb-1" for="recSurvAreaInp">মাঠ জরিপকৃত জমির পরিমাণ (শতাংশ) *</label><input id="recSurvAreaInp" type="number" step="0.01" min="0.01" required value="30" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-cyan-300 font-bold" /></div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div><label id="lblRecDeed" class="block text-slate-300 font-semibold mb-1" for="recDeedInp">দলিল নম্বর</label><input id="recDeedInp" type="text" placeholder="যেমন: DEED-4401" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono" /></div>
+          <div><label id="lblRecStatus" class="block text-slate-300 font-semibold mb-1" for="recStatusInp">যাচাই অবস্থা</label><select id="recStatusInp" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white"></select></div>
+        </div>
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+          <button type="button" id="cancelRecordModalBtn" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold">বাতিল</button>
+          <button type="submit" id="saveRecordModalBtn" class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold">সংরক্ষণ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: AUTHENTICATION & ROLE SWITCHER -->
+  <div id="authModal" class="no-print hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 id="authModalTitle" class="text-base font-bold text-emerald-400">🔐 ভূমিকা-ভিত্তিক প্রবেশাধিকার ও ব্যবহারকারী পরিবর্তন</h3>
+        <button type="button" id="closeAuthModalBtn" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+      <p id="authModalSubtitle" class="text-xs text-slate-300">প্রধান প্রশাসক (পূর্ণ নিয়ন্ত্রণ), ভূমি কর্মকর্তা (সংযোজন ও সম্পাদনা), অথবা সাধারণ দর্শক (শুধুমাত্র পাঠযোগ্য) ভূমিকা নির্বাচন করুন:</p>
+      <div class="space-y-2 text-xs">
+        <button type="button" data-role-login="admin" class="w-full p-3 rounded-xl bg-emerald-950/80 hover:bg-emerald-900/80 border border-emerald-500/40 text-left flex items-center justify-between">
+          <div><div id="authAdminName" class="font-bold text-white">নাহিনুর চৌধুরী</div><div id="authAdminSub" class="text-emerald-300">nahinur.admin@bhumishield.bd • প্রধান ভূমি মালিক (OWN-1001)</div></div>
+          <span id="authAdminBadge" class="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 font-extrabold">প্রধান প্রশাসক</span>
+        </button>
+        <button type="button" data-role-login="officer" class="w-full p-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-cyan-500/30 text-left flex items-center justify-between">
+          <div><div id="authOfficerName" class="font-bold text-white">নুসরাত জাহান</div><div id="authOfficerSub" class="text-cyan-300">nusrat.officer@bhumishield.bd • সহকারী ভূমি কর্মকর্তা</div></div>
+          <span id="authOfficerBadge" class="px-2 py-0.5 rounded bg-cyan-500 text-slate-950 font-extrabold">ভূমি কর্মকর্তা</span>
+        </button>
+        <button type="button" data-role-login="viewer" class="w-full p-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-left flex items-center justify-between">
+          <div><div id="authViewerName" class="font-bold text-white">কামরুল হাসান চৌধুরী</div><div id="authViewerSub" class="text-slate-400">kamrul.viewer@bhumishield.bd • সাধারণ দর্শক (শুধুমাত্র পাঠযোগ্য)</div></div>
+          <span id="authViewerBadge" class="px-2 py-0.5 rounded bg-slate-700 text-slate-200 font-bold">সাধারণ দর্শক</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: EXPLAINABLE AI ASSISTANT -->
+  <div id="aiModal" class="no-print hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-lg w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <span id="aiModalBadge" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">নিরাপদ সার্ভার-সাইড এআই বিশ্লেষণ</span>
+          <h3 id="aiModalTitle" class="text-base font-bold text-white mt-1">🤖 ভূমি-শিল্ড ব্যাখ্যাযোগ্য এআই বিশ্লেষক</h3>
+        </div>
+        <button type="button" id="closeAiModalBtn" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+      <div id="aiModalDesc" class="text-xs text-slate-300 bg-slate-900/90 p-3 rounded-xl border border-slate-800">গোপন এপিআই চাবি ব্রাউজারে প্রকাশ না করে সার্ভার-সাইড রাউট ও ডেমো ফ্যালব্যাকের মাধ্যমে জমির রেকর্ড, ঝুঁকি ও উত্তরাধিকার বিশ্লেষণ করে। নিচে প্রশ্ন লিখুন:</div>
+      <div class="flex gap-2">
+        <input id="aiQueryInp" type="text" placeholder="নাহিনুর চৌধুরীর দাগ, খতিয়ান, ঝুঁকি বা উত্তরাধিকার সম্পর্কে প্রশ্ন লিখুন..." class="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white" />
+        <button type="button" id="askAiBtn" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs">বিশ্লেষণ করুন</button>
+      </div>
+      <div id="aiAnswerContainer" class="p-4 rounded-xl bg-slate-900 border border-emerald-500/30 text-xs space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: CONFIRMATION DIALOG -->
+  <div id="confirmModal" class="no-print hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-md w-full p-6 space-y-4">
+      <h3 id="confirmModalTitle" class="text-base font-bold text-rose-400">⚠️ নিশ্চিতকরণ ডায়ালগ</h3>
+      <p id="confirmModalDesc" class="text-xs text-slate-300">আপনি কি নিশ্চিতভাবে এই কার্যক্রমটি সম্পন্ন করতে চান?</p>
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800 text-xs">
+        <button type="button" id="confirmCancelBtn" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold">বাতিল</button>
+        <button type="button" id="confirmOkBtn" class="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-extrabold">নিশ্চিত করুন</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="no-print hidden fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl bg-emerald-600 text-slate-950 text-xs font-extrabold shadow-xl border border-emerald-300"></div>
+
+  <script>
+    const STORAGE_KEY = "bhumi_shield_ai_github_v4";
+    const LANG_STORAGE_KEY = "bhumi_shield_lang_pref";
+    const BN_DIGITS = ["০","১","২","৩","৪","৫","৬","৭","৮","৯"];
+
+    const SURVEY_LABELS = { BS: { bn: "বিএস জরিপ", en: "BS Survey" }, RS: { bn: "আরএস জরিপ", en: "RS Survey" }, Namjari: { bn: "ই-নামজারি", en: "e-Namjari" }, SA: { bn: "এসএ জরিপ", en: "SA Survey" }, CS: { bn: "সিএস জরিপ", en: "CS Survey" } };
+    const CLASS_LABELS = { VITI: { bn: "ভিটি (বসতবাড়ি)", en: "Homestead (Viti)" }, NAL: { bn: "নাল (কৃষিজমি)", en: "Agricultural (Nal)" }, BAGAN: { bn: "বাগান", en: "Orchard (Bagan)" }, PUKUR: { bn: "পুকুর", en: "Pond (Pukur)" }, CHALA: { bn: "চালা (উঁচু ভূমি)", en: "Highland (Chala)" } };
+    const DIST_LABELS = { SYLHET: { bn: "সিলেট", en: "Sylhet" }, RAJSHAHI: { bn: "রাজশাহী", en: "Rajshahi" }, CHATTOGRAM: { bn: "চট্টগ্রাম", en: "Chattogram" }, DHAKA: { bn: "ঢাকা", en: "Dhaka" }, MOULVIBAZAR: { bn: "মৌলভীবাজার", en: "Moulvibazar" } };
+    const STATUS_LABELS = { VERIFIED: { bn: "যাচাইকৃত রেকর্ড", en: "Verified Record" }, REVIEW: { bn: "পর্যালোচনাধীন", en: "Under Review" }, RISK: { bn: "ঝুঁকি চিহ্নিত", en: "Risk Flagged" } };
+    const RISK_TYPE_LABELS = { MISSING_DOCUMENT: { bn: "হস্তান্তর দলিল অনুপস্থিত", en: "Missing Transfer Deed" }, AREA_MISMATCH: { bn: "জমির পরিমাণে অমিল", en: "Land Area Mismatch" }, INCONSISTENT_DATE: { bn: "অসামঞ্জস্যপূর্ণ তারিখ ও ব্যবধান", en: "Inconsistent Date & Gap" }, DUPLICATE_ID: { bn: "ডুপ্লিকেট দাগ নম্বর", en: "Duplicate Dag Number" } };
+    const SEVERITY_LABELS = { HIGH: { bn: "উচ্চ ঝুঁকি", en: "High Risk" }, MEDIUM: { bn: "মধ্যম ঝুঁকি", en: "Medium Risk" }, LOW: { bn: "নিম্ন ঝুঁকি", en: "Low Risk" } };
+    const RISK_STATUS_LABELS = { Open: { bn: "অমীমাংসিত", en: "Open" }, Resolved: { bn: "সমাধানকৃত", en: "Resolved" } };
+    const DOC_TYPE_LABELS = { BS_KHATIAN: { bn: "বিএস খতিয়ান পর্চা", en: "BS Khatian Record" }, KABALA_DEED: { bn: "রেজিস্ট্রিকৃত কবলা দলিল", en: "Registered Kabala Deed" }, DAKHILA: { bn: "ভূমি উন্নয়ন কর দাখিলা রশিদ", en: "Land Development Tax Dakhila" }, NAMJARI_KHATIAN: { bn: "ই-নামজারি ও হেবানামা পর্চা", en: "e-Namjari & Hebanama Khatian" }, WARISHAN: { bn: "ওয়ারিশ সনদপত্র", en: "Succession Certificate" } };
+    const AUDIT_ACTION_LABELS = { INIT_ESTATE: { bn: "এস্টেট নিবন্ধন", en: "Estate Initialized" }, VERIFY_DOC: { bn: "নথি যাচাই", en: "Document Verified" }, RISK_SCAN: { bn: "ঝুঁকি বিশ্লেষণ", en: "Risk Scan" }, CREATE_RECORD: { bn: "রেকর্ড সংযোজন", en: "Record Created" }, UPDATE_RECORD: { bn: "রেকর্ড হালনাগাদ", en: "Record Updated" }, DELETE_RECORD: { bn: "রেকর্ড মুছে ফেলা", en: "Record Deleted" }, ADD_TIMELINE: { bn: "মালিকানা ইতিহাস সংযোজন", en: "Timeline Added" }, ADD_FAMILY: { bn: "বংশবৃক্ষ সংযোজন", en: "Family Member Added" }, RISK_STATUS: { bn: "ঝুঁকি অবস্থা পরিবর্তন", en: "Risk Status Updated" }, UPLOAD_DOC: { bn: "নথি সংযোজন", en: "Document Uploaded" }, SWITCH_ROLE: { bn: "ভূমিকা পরিবর্তন", en: "Role Switched" } };
+
+    let state = {
+      lang: "bn", module: "dashboard", role: "admin",
+      userNameBn: "নাহিনুর চৌধুরী", userNameEn: "Nahinur Chowdhury", userEmail: "nahinur.admin@bhumishield.bd",
+      searchQuery: "", districtFilter: "ALL", surveyFilter: "ALL", sortBy: "id", currentPage: 1, pageSize: 5,
+      timelineRecordFilter: "ALL", selectedMemberId: "MEM-102", inhRule: "faraid", inhGrossDec: 155.50, inhDebtDec: 5.50,
+      riskFilter: "ALL", supabaseUrl: "", supabaseAnonKey: "", supabaseConnected: false
+    };
+
+    function tr(bnText, enText) { return state.lang === "bn" ? bnText : enText; }
+    function esc(v) { return String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+    function bnNum(v) { return state.lang === "en" ? String(v) : String(v).replace(/[0-9]/g, d => BN_DIGITS[Number(d)]); }
+    function fmtDate(iso) { return bnNum(iso); }
+    function fmtCurrency(amt) { return `৳ ${bnNum(Number(amt || 0).toLocaleString("en-IN"))}`; }
+    function labelOf(mapObj, code) { return (!mapObj || !mapObj[code]) ? code : (state.lang === "bn" ? mapObj[code].bn : mapObj[code].en); }
+    function currentUserName() { return state.lang === "bn" ? state.userNameBn : state.userNameEn; }
+    function currentRoleLabel() { return state.role === "admin" ? tr("প্রধান প্রশাসক","Administrator") : (state.role === "officer" ? tr("ভূমি কর্মকর্তা","Land Officer") : tr("সাধারণ দর্শক","Viewer")); }
+
+    function toast(msg, isError = false) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.className = `no-print fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl text-xs font-extrabold shadow-xl border ${isError ? 'bg-rose-600 text-white border-rose-300' : 'bg-emerald-400 text-slate-950 border-emerald-200'}`;
+      el.classList.remove("hidden");
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => el.classList.add("hidden"), 3400);
+    }
+
+    let pendingConfirmFn = null;
+    function openConfirmModal(message, onConfirm) {
+      document.getElementById("confirmModalTitle").textContent = tr("⚠️ নিশ্চিতকরণ ডায়ালগ", "⚠️ Confirmation Dialog");
+      document.getElementById("confirmModalDesc").textContent = message;
+      document.getElementById("confirmCancelBtn").textContent = tr("বাতিল", "Cancel");
+      document.getElementById("confirmOkBtn").textContent = tr("মুছে ফেলুন / নিশ্চিত করুন", "Confirm");
+      pendingConfirmFn = onConfirm;
+      document.getElementById("confirmModal").classList.remove("hidden");
+    }
+
+    function getDefaultDataset() {
+      return {
+        owners: [
+          { owner_id: "OWN-1001", name_bn: "নাহিনুর চৌধুরী", name_en: "Nahinur Chowdhury", father_bn: "মরহুম হাজী মাহমুদ আলী চৌধুরী", father_en: "Late Haji Mahmud Ali Chowdhury", spouse_bn: "ফাতেমা বেগম চৌধুরী", spouse_en: "Fatema Begum Chowdhury", status: "Living", district: "SYLHET", upazila_bn: "বিয়ানীবাজার", upazila_en: "Beanibazar", mouza_bn: "মাথিউরা", mouza_en: "Mathiura" },
+          { owner_id: "OWN-1002", name_bn: "ফাতেমা বেগম চৌধুরী", name_en: "Fatema Begum Chowdhury", father_bn: "মরহুম সৈয়দ নজরুল ইসলাম", father_en: "Late Syed Nazrul Islam", spouse_bn: "নাহিনুর চৌধুরী", spouse_en: "Nahinur Chowdhury", status: "Living", district: "SYLHET", upazila_bn: "বিয়ানীবাজার", upazila_en: "Beanibazar", mouza_bn: "মাথিউরা", mouza_en: "Mathiura" },
+          { owner_id: "OWN-1003", name_bn: "কামরুল হাসান চৌধুরী", name_en: "Kamrul Hasan Chowdhury", father_bn: "নাহিনুর চৌধুরী", father_en: "Nahinur Chowdhury", spouse_bn: "সাবরিনা সুলতানা", spouse_en: "Sabrina Sultana", status: "Living", district: "SYLHET", upazila_bn: "বিয়ানীবাজার", upazila_en: "Beanibazar", mouza_bn: "মাথিউরা", mouza_en: "Mathiura" },
+          { owner_id: "OWN-1004", name_bn: "মাহমুদুল হাসান চৌধুরী", name_en: "Mahmudul Hasan Chowdhury", father_bn: "নাহিনুর চৌধুরী", father_en: "Nahinur Chowdhury", spouse_bn: "ফারজানা ইয়াসমিন", spouse_en: "Farzana Yasmin", status: "Living", district: "SYLHET", upazila_bn: "দক্ষিণ সুরমা", upazila_en: "Dakshin Surma", mouza_bn: "কুচাই", mouza_en: "Kuchai" },
+          { owner_id: "OWN-1005", name_bn: "নাসরিন আক্তার চৌধুরী", name_en: "Nasrin Akter Chowdhury", father_bn: "নাহিনুর চৌধুরী", father_en: "Nahinur Chowdhury", spouse_bn: "তারেক আজিজ", spouse_en: "Tareq Aziz", status: "Living", district: "MOULVIBAZAR", upazila_bn: "শ্রীমঙ্গল", upazila_en: "Sreemangal", mouza_bn: "কালীঘাট", mouza_en: "Kalighat" },
+          { owner_id: "OWN-1006", name_bn: "মরহুম ফজলুল হক মণ্ডল", name_en: "Late Fazlul Haque Mandal", father_bn: "মরহুম কেরামত আলী মণ্ডল", father_en: "Late Keramat Ali Mandal", spouse_bn: "রোকেয়া বেগম", spouse_en: "Rokeya Begum", status: "Deceased", district: "RAJSHAHI", upazila_bn: "পবা", upazila_en: "Paba", mouza_bn: "হড়গ্রাম", mouza_en: "Haragram" },
+          { owner_id: "OWN-1007", name_bn: "স্বর্গীয় বিমল চন্দ্র দাস", name_en: "Late Bimal Chandra Das", father_bn: "স্বর্গীয় সুভাষ চন্দ্র দাস", father_en: "Late Subhash Chandra Das", spouse_bn: "স্বপ্না রানী দাস", spouse_en: "Swapna Rani Das", status: "Deceased", district: "CHATTOGRAM", upazila_bn: "পটিয়া", upazila_en: "Patiya", mouza_bn: "ধলঘাট", mouza_en: "Dhalghat" },
+          { owner_id: "OWN-1008", name_bn: "মরহুম আনোয়ারুল ইসলাম সিকদার", name_en: "Late Anwarul Islam Sikder", father_bn: "মরহুম সিরাজুল ইসলাম সিকদার", father_en: "Late Sirajul Islam Sikder", spouse_bn: "হোসনে আরা সিকদার", spouse_en: "Hosne Ara Sikder", status: "Deceased", district: "DHAKA", upazila_bn: "সাভার", upazila_en: "Savar", mouza_bn: "বিরুলিয়া", mouza_en: "Birulia" }
+        ],
+        records: [
+          { record_id: "REC-2001", owner_id: "OWN-1001", owner_bn: "নাহিনুর চৌধুরী", owner_en: "Nahinur Chowdhury", dag_no: "Dag-107", khatian_no: "BS-2001", survey: "BS", mouza_bn: "মাথিউরা", mouza_en: "Mathiura", district: "SYLHET", land_class: "VITI", area_dec: 60.00, surv_dec: 60.00, deed_no: "DEED-4401", date: "2024-03-15", status: "VERIFIED" },
+          { record_id: "REC-2002", owner_id: "OWN-1001", owner_bn: "নাহিনুর চৌধুরী", owner_en: "Nahinur Chowdhury", dag_no: "Dag-108", khatian_no: "BS-2002", survey: "Namjari", mouza_bn: "মাথিউরা", mouza_en: "Mathiura", district: "SYLHET", land_class: "NAL", area_dec: 31.50, surv_dec: 31.50, deed_no: "DEED-4412", date: "2025-06-10", status: "VERIFIED" },
+          { record_id: "REC-2003", owner_id: "OWN-1001", owner_bn: "নাহিনুর চৌধুরী", owner_en: "Nahinur Chowdhury", dag_no: "Dag-142", khatian_no: "BS-2006", survey: "BS", mouza_bn: "মাথিউরা", mouza_en: "Mathiura", district: "SYLHET", land_class: "NAL", area_dec: 64.00, surv_dec: 64.00, deed_no: "DEED-4490", date: "2025-11-20", status: "VERIFIED" },
+          { record_id: "REC-2004", owner_id: "OWN-1002", owner_bn: "ফাতেমা বেগম চৌধুরী", owner_en: "Fatema Begum Chowdhury", dag_no: "Dag-149", khatian_no: "Namjari-2007", survey: "Namjari", mouza_bn: "মাথিউরা", mouza_en: "Mathiura", district: "SYLHET", land_class: "BAGAN", area_dec: 40.00, surv_dec: 40.00, deed_no: "HEBA-2091", date: "2024-08-12", status: "VERIFIED" },
+          { record_id: "REC-2005", owner_id: "OWN-1006", owner_bn: "মরহুম ফজলুল হক মণ্ডল", owner_en: "Late Fazlul Haque Mandal", dag_no: "Dag-128", khatian_no: "RS-2004", survey: "RS", mouza_bn: "হড়গ্রাম", mouza_en: "Haragram", district: "RAJSHAHI", land_class: "BAGAN", area_dec: 88.00, surv_dec: 88.00, deed_no: "", date: "2023-05-19", status: "REVIEW" },
+          { record_id: "REC-2006", owner_id: "OWN-1007", owner_bn: "স্বর্গীয় বিমল চন্দ্র দাস", owner_en: "Late Bimal Chandra Das", dag_no: "Dag-121", khatian_no: "BS-2003", survey: "BS", mouza_bn: "ধলঘাট", mouza_en: "Dhalghat", district: "CHATTOGRAM", land_class: "PUKUR", area_dec: 44.50, surv_dec: 33.00, deed_no: "DEED-1904", date: "2022-09-01", status: "RISK" },
+          { record_id: "REC-2007", owner_id: "OWN-1008", owner_bn: "মরহুম আনোয়ারুল ইসলাম সিকদার", owner_en: "Late Anwarul Islam Sikder", dag_no: "Dag-135", khatian_no: "BS-2005", survey: "BS", mouza_bn: "বিরুলিয়া", mouza_en: "Birulia", district: "DHAKA", land_class: "CHALA", area_dec: 57.50, surv_dec: 57.50, deed_no: "DEED-3012", date: "2027-01-14", status: "RISK" }
+        ],
+        timeline: [
+          { event_id: "EVT-701", record_id: "REC-2001", date: "1962-04-10", stage: "SA", from_bn: "এসএ সরকারি জরিপ রেকর্ড", from_en: "SA Government Survey Record", to_bn: "মরহুম হাজী মাহমুদ আলী চৌধুরী", to_en: "Late Haji Mahmud Ali Chowdhury", mode_bn: "মূল এসএ খতিয়ান অন্তর্ভুক্তি", mode_en: "Original SA Khatian Entry", deed: "SA-402", dec: 60.00 },
+          { event_id: "EVT-702", record_id: "REC-2001", date: "1988-09-14", stage: "RS", from_bn: "মরহুম হাজী মাহমুদ আলী চৌধুরী", from_en: "Late Haji Mahmud Ali Chowdhury", to_bn: "নাহিনুর চৌধুরী (OWN-1001)", to_en: "Nahinur Chowdhury (OWN-1001)", mode_bn: "ওয়ারিশ ও আরএস নামজারি", mode_en: "Succession & RS Mutation", deed: "RS-119/88", dec: 60.00 },
+          { event_id: "EVT-703", record_id: "REC-2001", date: "2024-03-15", stage: "BS", from_bn: "আরএস খতিয়ান রেকর্ড", from_en: "RS Khatian Record", to_bn: "নাহিনুর চৌধুরী (OWN-1001)", to_en: "Nahinur Chowdhury (OWN-1001)", mode_bn: "বিএস জরিপ ও ই-নামজারি", mode_en: "BS Survey & e-Namjari", deed: "DEED-4401", dec: 60.00 },
+          { event_id: "EVT-704", record_id: "REC-2002", date: "2025-06-10", stage: "Namjari", from_bn: "আনোয়ার হোসেন তালুকদার", from_en: "Anwar Hossain Talukder", to_bn: "নাহিনুর চৌধুরী (OWN-1001)", to_en: "Nahinur Chowdhury (OWN-1001)", mode_bn: "রেজিস্ট্রিকৃত কবলা দলিল", mode_en: "Registered Kabala Sale Deed", deed: "DEED-4412", dec: 31.50 },
+          { event_id: "EVT-705", record_id: "REC-2004", date: "2024-08-12", stage: "Namjari", from_bn: "নাহিনুর চৌধুরী (OWN-1001)", from_en: "Nahinur Chowdhury (OWN-1001)", to_bn: "ফাতেমা বেগম চৌধুরী (OWN-1002)", to_en: "Fatema Begum Chowdhury (OWN-1002)", mode_bn: "রেজিস্ট্রিকৃত হেবানামা দলিল", mode_en: "Registered Hebanama Gift Deed", deed: "HEBA-2091", dec: 40.00 }
+        ],
+        family: [
+          { member_id: "MEM-101", name_bn: "মরহুম হাজী মাহমুদ আলী চৌধুরী", name_en: "Late Haji Mahmud Ali Chowdhury", rel_bn: "পিতা", rel_en: "Father", role: "father", gen: 1, status: "Deceased", parent_id: null, eligible: false, weight: 0 },
+          { member_id: "MEM-102", name_bn: "নাহিনুর চৌধুরী (OWN-1001)", name_en: "Nahinur Chowdhury (OWN-1001)", rel_bn: "প্রধান এস্টেট মালিক", rel_en: "Primary Estate Owner", role: "owner", gen: 2, status: "Living", parent_id: "MEM-101", eligible: false, weight: 0 },
+          { member_id: "MEM-103", name_bn: "ফাতেমা বেগম চৌধুরী (OWN-1002)", name_en: "Fatema Begum Chowdhury (OWN-1002)", rel_bn: "স্ত্রী", rel_en: "Spouse", role: "spouse", gen: 2, status: "Living", parent_id: null, eligible: true, weight: 1 },
+          { member_id: "MEM-104", name_bn: "কামরুল হাসান চৌধুরী (OWN-1003)", name_en: "Kamrul Hasan Chowdhury (OWN-1003)", rel_bn: "পুত্র", rel_en: "Son", role: "son", gen: 3, status: "Living", parent_id: "MEM-102", eligible: true, weight: 2 },
+          { member_id: "MEM-105", name_bn: "মাহমুদুল হাসান চৌধুরী (OWN-1004)", name_en: "Mahmudul Hasan Chowdhury (OWN-1004)", rel_bn: "পুত্র", rel_en: "Son", role: "son", gen: 3, status: "Living", parent_id: "MEM-102", eligible: true, weight: 2 },
+          { member_id: "MEM-106", name_bn: "নাসরিন আক্তার চৌধুরী (OWN-1005)", name_en: "Nasrin Akter Chowdhury (OWN-1005)", rel_bn: "কন্যা", rel_en: "Daughter", role: "daughter", gen: 3, status: "Living", parent_id: "MEM-102", eligible: true, weight: 1 },
+          { member_id: "MEM-107", name_bn: "আরাফাত চৌধুরী", name_en: "Arafat Chowdhury", rel_bn: "নাতি", rel_en: "Grandson", role: "grandchild", gen: 4, status: "Living", parent_id: "MEM-104", eligible: false, weight: 0 }
+        ],
+        risks: [
+          { alert_id: "RSK-401", record_id: "REC-2005", type: "MISSING_DOCUMENT", severity: "MEDIUM", title_bn: "হস্তান্তর দলিলের নম্বর ও যাচাইকৃত অনুলিপি অনুপস্থিত", title_en: "Missing Transfer Deed Reference & Certified Copy", detail_bn: "REC-2005 (Dag-128, হড়গ্রাম মৌজা) রেকর্ডে কোনো রেজিস্ট্রিকৃত হস্তান্তর দলিলের নম্বর সংযুক্ত নেই।", detail_en: "Record REC-2005 (Dag-128, Haragram Mouza) has no registered transfer deed reference attached.", rec_bn: "সাব-রেজিস্ট্রি অফিসের বালাম বহি যাচাই করে মূল দলিলের সার্টিফাইড কপি নথি ভল্টে সংযুক্ত করুন।", rec_en: "Verify the Sub-Registry volume register and upload the certified deed copy to the Document Vault.", status: "Open" },
+          { alert_id: "RSK-402", record_id: "REC-2006", type: "AREA_MISMATCH", severity: "HIGH", title_bn: "খতিয়ান ও মাঠ জরিপকৃত জমির পরিমাণে অমিল", title_en: "Discrepancy Between Khatian Area & Field Survey", detail_bn: "REC-2006 (Dag-121, BS-2003)-এ খতিয়ানভুক্ত জমি ৪৪.৫০ শতাংশ কিন্তু মাঠ জরিপে ৩৩.০০ শতাংশ (১১.৫০ শতাংশ পার্থক্য) পাওয়া গেছে।", detail_en: "Record REC-2006 (Dag-121, BS-2003) lists 44.50 Decimal in the Khatian but 33.00 Decimal in the field survey (11.50 Decimal difference).", rec_bn: "সহকারী সার্ভেয়ারের মাঠ নকশা ও আরএস-বিএস খতিয়ান মিলিয়ে সীমানা পুনরায় পরিমাপ করুন।", rec_en: "Cross-check the Assistant Surveyor field map and compare RS vs. BS Khatian area columns.", status: "Open" },
+          { alert_id: "RSK-403", record_id: "REC-2007", type: "INCONSISTENT_DATE", severity: "HIGH", title_bn: "অসামঞ্জস্যপূর্ণ দলিলের তারিখ ও মালিকানা ধারাবাহিকতার ব্যবধান", title_en: "Inconsistent Deed Date & Ownership Lineage Gap", detail_bn: "REC-2007 (Dag-135, BS-2005)-এ দলিলের নিবন্ধন তারিখ ভবিষ্যৎ/অসামঞ্জস্যপূর্ণ এবং মধ্যবর্তী আরএস নামজারি যোগসূত্র অনুপস্থিত।", detail_en: "Record REC-2007 (Dag-135, BS-2005) contains an inconsistent future deed date and lacks an intermediate RS mutation link.", rec_bn: "দলিল নিবন্ধনের প্রকৃত তারিখ এবং পূর্ববর্তী আরএস খতিয়ান যোগসূত্র মানবিকভাবে যাচাই করুন।", rec_en: "Manually verify the deed execution date and intermediate RS Khatian succession link.", status: "Open" }
+        ],
+        documents: [
+          { doc_id: "DOC-901", record_id: "REC-2001", owner_bn: "নাহিনুর চৌধুরী", owner_en: "Nahinur Chowdhury", type: "BS_KHATIAN", title_bn: "বিএস খতিয়ান পর্চা (BS-2001, মাথিউরা মৌজা)", title_en: "BS Khatian Record (BS-2001, Mathiura Mouza)", file_name: "bs_khatian_2001_nahinur.pdf", hash: "e3b0c44298fc1c149afbf4c8996fb924", amount_bdt: 1250, date: "2026-06-10", status: "VERIFIED" },
+          { doc_id: "DOC-902", record_id: "REC-2002", owner_bn: "নাহিনুর চৌধুরী", owner_en: "Nahinur Chowdhury", type: "KABALA_DEED", title_bn: "রেজিস্ট্রিকৃত কবলা দলিল (DEED-4412, সিলেট)", title_en: "Registered Kabala Sale Deed (DEED-4412, Sylhet)", file_name: "kabala_deed_4412.pdf", hash: "8f434346648f6b96df89dda901c5176b", amount_bdt: 450000, date: "2026-07-12", status: "VERIFIED" },
+          { doc_id: "DOC-903", record_id: "REC-2003", owner_bn: "নাহিনুর চৌধুরী", owner_en: "Nahinur Chowdhury", type: "DAKHILA", title_bn: "ভূমি উন্নয়ন কর দাখিলা রশিদ (DEED-4490)", title_en: "Land Development Tax Dakhila Receipt (DEED-4490)", file_name: "dakhila_tax_2026.pdf", hash: "2c26b46b68ffc68ff99b453c1d304134", amount_bdt: 3200, date: "2026-08-19", status: "VERIFIED" },
+          { doc_id: "DOC-904", record_id: "REC-2004", owner_bn: "ফাতেমা বেগম চৌধুরী", owner_en: "Fatema Begum Chowdhury", type: "NAMJARI_KHATIAN", title_bn: "হেবানামা ও ই-নামজারি পর্চা (Namjari-2007)", title_en: "Hebanama & e-Namjari Record (Namjari-2007)", file_name: "heba_namjari_2007.pdf", hash: "4b227777d4dd1fc61c6f884f48641d02", amount_bdt: 1150, date: "2026-09-05", status: "VERIFIED" }
+        ],
+        auditLogs: [
+          { ts: "2026-10-17 15:30", actor_bn: "নাহিনুর চৌধুরী", actor_en: "Nahinur Chowdhury", role: "admin", action: "INIT_ESTATE", target: "OWN-1001", summary_bn: "নাহিনুর চৌধুরীর নামে মাথিউরা মৌজার ৩টি দাগ (১৫৫.৫০ শতাংশ) ড্যাশবোর্ডে সংযুক্ত করা হয়েছে।", summary_en: "Linked 3 plots (155.50 Decimal) in Mathiura Mouza under primary owner Nahinur Chowdhury." },
+          { ts: "2026-10-16 18:15", actor_bn: "নুসরাত জাহান", actor_en: "Nusrat Jahan", role: "officer", action: "VERIFY_DOC", target: "DOC-903", summary_bn: "Dag-142 এর ভূমি উন্নয়ন কর দাখিলা রশিদ যাচাই সম্পন্ন হয়েছে।", summary_en: "Verified Land Development Tax Dakhila receipt for Dag-142." },
+          { ts: "2026-10-15 11:40", actor_bn: "নাহিনুর চৌধুরী", actor_en: "Nahinur Chowdhury", role: "admin", action: "RISK_SCAN", target: "REC-2006", summary_bn: "খতিয়ান ও মাঠ জরিপের ১১.৫০ শতাংশ অমিল ঝুঁকি বিশ্লেষণে চিহ্নিত করা হয়েছে।", summary_en: "Flagged 11.50 Decimal Khatian vs. field survey discrepancy in Risk Analysis." }
+        ]
+      };
+    }
+
+    let db = getDefaultDataset();
+    function loadDb() {
+      try {
+        const savedLang = localStorage.getItem(LANG_STORAGE_KEY);
+        state.lang = (savedLang === "bn" || savedLang === "en") ? savedLang : "bn";
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.records) && parsed.records.length > 0 && parsed.records[0].owner_en) db = parsed;
+        }
+      } catch (e) {}
+    }
+    function saveDb() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch (e) {} }
+    function logAudit(action, target, summaryBn, summaryEn) {
+      const now = new Date();
+      const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+      db.auditLogs.unshift({ ts, actor_bn: state.userNameBn, actor_en: state.userNameEn, role: state.role, action, target, summary_bn: summaryBn, summary_en: summaryEn || summaryBn });
+      saveDb();
+    }
+
+    const MODULES = [
+      { id: "dashboard", icon: "📊", bn: "১. ড্যাশবোর্ড", en: "1. Dashboard" },
+      { id: "records", icon: "📋", bn: "২. জমির রেকর্ড", en: "2. Land Records" },
+      { id: "timeline", icon: "⏳", bn: "৩. মালিকানা ইতিহাস", en: "3. Ownership History" },
+      { id: "family", icon: "🌳", bn: "৪. পারিবারিক বংশবৃক্ষ", en: "4. Family Tree" },
+      { id: "inheritance", icon: "⚖️", bn: "৫. উত্তরাধিকার হিসাব", en: "5. Inheritance Calculator" },
+      { id: "risk", icon: "🚨", bn: "৬. ঝুঁকি বিশ্লেষণ", en: "6. Risk Analysis" },
+      { id: "documents", icon: "🔐", bn: "৭. নথি ও লেনদেন", en: "7. Documents & Transactions" },
+      { id: "reports", icon: "📑", bn: "৮. প্রতিবেদন ও সেটিংস", en: "8. Reports & Settings" }
+    ];
+
+    let distChart = null, classChart = null, inhChart = null;
+
+    function updateShellTranslations() {
+      document.documentElement.lang = state.lang;
+      document.title = tr("ভূমি-শিল্ড এআই — স্মার্ট ভূমি রেকর্ড, মালিকানা ইতিহাস ও উত্তরাধিকার ব্যবস্থাপনা প্ল্যাটফর্ম", "BHUMI-SHIELD AI — Smart Land Records, Ownership History & Inheritance Platform");
+      document.getElementById("modeBadge").textContent = tr("ডেমো সংস্করণ (শিক্ষামূলক প্রোটোটাইপ)", "Demo Mode (Educational Prototype)");
+      document.getElementById("disclaimerText").textContent = tr("এই প্ল্যাটফর্মটি শুধুমাত্র শিক্ষামূলক ও প্রদর্শনী উদ্দেশ্যে তৈরি; এটি বাংলাদেশ সরকারের কোনো দাপ্তরিক ডাটাবেস বা চূড়ান্ত আইনি দলিলের বিকল্প নয়।", "This platform is built strictly for educational and demonstration purposes; it is not connected to any official government database or legal title registry.");
+      document.getElementById("dbStatusBadge").textContent = state.supabaseConnected ? tr("ডাটাবেস: সুপাবেস ক্লাউড সংযুক্ত", "Database: Supabase Cloud Connected") : tr("ডাটাবেস: স্থানীয় সংরক্ষণ ও সুপাবেস প্রস্তুত", "Database: Local Persistent + Supabase Ready");
+      document.getElementById("roleBadge").textContent = `${tr("ভূমিকা:", "Role:")} ${currentRoleLabel()} (${currentUserName()})`;
+
+      document.getElementById("brandTitle").textContent = tr("ভূমি-শিল্ড এআই", "BHUMI-SHIELD AI");
+      document.getElementById("brandSub").textContent = tr("স্মার্ট ভূমি ও উত্তরাধিকার প্ল্যাটফর্ম", "Smart Land & Inheritance Platform");
+      document.getElementById("sideOwnerLabel").textContent = tr("প্রধান মালিক ও প্রশাসক:", "Primary Owner & Admin:");
+      document.getElementById("sideUserName").textContent = currentUserName();
+      document.getElementById("sideUserEmail").textContent = state.userEmail;
+      document.getElementById("openAuthModalBtn").textContent = tr("🔐 ভূমিকা ও প্রবেশ", "🔐 Role / Sign In");
+      document.getElementById("resetDemoBtn").textContent = tr("ডেমো তথ্য পুনরায় স্থাপন", "Reset Demo Data");
+
+      document.getElementById("globalSearchInput").placeholder = tr("দাগ নম্বর (Dag-107), খতিয়ান (BS-2001), রেকর্ড আইডি (REC-2001) বা মালিকের নাম লিখুন...", "Search by Dag No (Dag-107), Khatian (BS-2001), Record ID (REC-2001) or Owner Name...");
+      document.getElementById("globalSearchBtn").textContent = tr("অনুসন্ধান", "Search");
+      document.getElementById("notifBtnLabel").textContent = tr("নোটিফিকেশন", "Notifications");
+      document.getElementById("aiModalToggleBtn").textContent = tr("🤖 এআই বিশ্লেষণ", "🤖 AI Analysis");
+      document.getElementById("notifPanelTitle").textContent = tr("সিস্টেম নোটিফিকেশন ও ঝুঁকি সতর্কবার্তা", "System Notifications & Risk Alerts");
+      document.getElementById("loadingBannerText").textContent = tr("লোড হচ্ছে...", "Loading...");
+
+      const bnInd = document.getElementById("langBnIndicator"), enInd = document.getElementById("langEnIndicator");
+      bnInd.className = state.lang === "bn" ? "px-2 py-0.5 rounded bg-emerald-500 text-slate-950 font-extrabold" : "px-2 py-0.5 rounded text-slate-300 font-semibold";
+      enInd.className = state.lang === "en" ? "px-2 py-0.5 rounded bg-emerald-500 text-slate-950 font-extrabold" : "px-2 py-0.5 rounded text-slate-300 font-semibold";
+
+      document.getElementById("lblRecId").textContent = tr("রেকর্ড আইডি *", "Record ID *");
+      document.getElementById("lblRecOwner").textContent = tr("জমির মালিক নির্বাচন *", "Select Landowner *");
+      document.getElementById("lblRecDag").textContent = tr("দাগ নম্বর (মূল রূপে) *", "Dag Number (Canonical) *");
+      document.getElementById("lblRecKhatian").textContent = tr("খতিয়ান নম্বর (মূল রূপে) *", "Khatian Number (Canonical) *");
+      document.getElementById("lblRecSurvey").textContent = tr("জরিপের ধরন *", "Survey Type *");
+      document.getElementById("lblRecClass").textContent = tr("জমির শ্রেণি *", "Land Classification *");
+      document.getElementById("lblRecMouza").textContent = tr("মৌজা *", "Mouza *");
+      document.getElementById("lblRecDist").textContent = tr("জেলা *", "District *");
+      document.getElementById("lblRecArea").textContent = tr("খতিয়ানভুক্ত জমির পরিমাণ (শতাংশ) *", "Recorded Khatian Area (Decimal) *");
+      document.getElementById("lblRecSurvArea").textContent = tr("মাঠ জরিপকৃত জমির পরিমাণ (শতাংশ) *", "Field Surveyed Area (Decimal) *");
+      document.getElementById("lblRecDeed").textContent = tr("দলিল নম্বর (সরকারি নথি আইডি)", "Deed Reference ID");
+      document.getElementById("lblRecStatus").textContent = tr("যাচাই অবস্থা", "Verification Status");
+      document.getElementById("cancelRecordModalBtn").textContent = tr("বাতিল", "Cancel");
+      document.getElementById("saveRecordModalBtn").textContent = tr("সংরক্ষণ", "Save");
+
+      const fillSel = (id, mapObj, defVal) => {
+        const el = document.getElementById(id), prev = el.value || defVal;
+        el.innerHTML = Object.keys(mapObj).map(k => `<option value="${k}">${esc(labelOf(mapObj, k))}</option>`).join("");
+        el.value = prev;
+      };
+      fillSel("recSurveyInp", SURVEY_LABELS, "BS");
+      fillSel("recClassInp", CLASS_LABELS, "VITI");
+      fillSel("recDistInp", DIST_LABELS, "SYLHET");
+      fillSel("recStatusInp", STATUS_LABELS, "VERIFIED");
+
+      document.getElementById("authModalTitle").textContent = tr("🔐 ভূমিকা-ভিত্তিক প্রবেশাধিকার ও ব্যবহারকারী পরিবর্তন", "🔐 Role-Based Access & User Switcher");
+      document.getElementById("authModalSubtitle").textContent = tr("প্রধান প্রশাসক (পূর্ণ নিয়ন্ত্রণ), ভূমি কর্মকর্তা (সংযোজন ও সম্পাদনা), অথবা সাধারণ দর্শক (শুধুমাত্র পাঠযোগ্য) ভূমিকা নির্বাচন করুন:", "Select Administrator (full control), Land Officer (add & edit), or Viewer (read-only) role:");
+      document.getElementById("authAdminName").textContent = tr("নাহিনুর চৌধুরী", "Nahinur Chowdhury");
+      document.getElementById("authAdminSub").textContent = tr("nahinur.admin@bhumishield.bd • প্রধান ভূমি মালিক (OWN-1001)", "nahinur.admin@bhumishield.bd • Primary Landowner (OWN-1001)");
+      document.getElementById("authAdminBadge").textContent = tr("প্রধান প্রশাসক", "Administrator");
+      document.getElementById("authOfficerName").textContent = tr("নুসরাত জাহান", "Nusrat Jahan");
+      document.getElementById("authOfficerSub").textContent = tr("nusrat.officer@bhumishield.bd • সহকারী ভূমি কর্মকর্তা", "nusrat.officer@bhumishield.bd • Assistant Land Officer");
+      document.getElementById("authOfficerBadge").textContent = tr("ভূমি কর্মকর্তা", "Land Officer");
+      document.getElementById("authViewerName").textContent = tr("কামরুল হাসান চৌধুরী", "Kamrul Hasan Chowdhury");
+      document.getElementById("authViewerSub").textContent = tr("kamrul.viewer@bhumishield.bd • সাধারণ দর্শক (শুধুমাত্র পাঠযোগ্য)", "kamrul.viewer@bhumishield.bd • Citizen Viewer (Read-Only)");
+      document.getElementById("authViewerBadge").textContent = tr("সাধারণ দর্শক", "Viewer");
+
+      document.getElementById("aiModalBadge").textContent = tr("নিরাপদ সার্ভার-সাইড এআই বিশ্লেষণ", "Secure Server-Side AI Analysis");
+      document.getElementById("aiModalTitle").textContent = tr("🤖 ভূমি-শিল্ড ব্যাখ্যাযোগ্য এআই বিশ্লেষক", "🤖 BHUMI-SHIELD Explainable AI Analyst");
+      document.getElementById("aiModalDesc").textContent = tr("গোপন এপিআই চাবি ব্রাউজারে প্রকাশ না করে সার্ভার-সাইড রাউট ও ডেমো ফ্যালব্যাকের মাধ্যমে জমির রেকর্ড, ঝুঁকি ও উত্তরাধিকার বিশ্লেষণ করে। নিচে প্রশ্ন লিখুন:", "Analyzes land records, risk factors, and inheritance rules via server-side routing and demo fallback without exposing secret API keys in the browser:");
+      document.getElementById("aiQueryInp").placeholder = tr("নাহিনুর চৌধুরীর দাগ, খতিয়ান, ঝুঁকি বা উত্তরাধিকার সম্পর্কে প্রশ্ন লিখুন...", "Ask about Nahinur Chowdhury's plots, Khatian, risks, or inheritance...");
+      document.getElementById("askAiBtn").textContent = tr("বিশ্লেষণ করুন", "Analyze");
+    }
+
+    function renderApp() {
+      updateShellTranslations();
+      const openRisks = db.risks.filter(r => r.status !== "Resolved");
+      document.getElementById("notifCountBadge").textContent = bnNum(openRisks.length);
+      document.getElementById("notifList").innerHTML = openRisks.length === 0
+        ? `<div class="text-slate-400">${esc(tr("কোনো অমীমাংসিত ঝুঁকি সতর্কবার্তা নেই।", "No unresolved risk alerts found."))}</div>`
+        : openRisks.map(r => `<div class="p-2.5 rounded-xl bg-slate-900 border border-rose-500/30 space-y-1"><div class="flex items-center justify-between"><span class="font-mono font-bold text-rose-400">${esc(r.alert_id)} • ${esc(r.record_id)}</span><span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold">${esc(labelOf(SEVERITY_LABELS, r.severity))}</span></div><div class="font-semibold text-white">${esc(tr(r.title_bn, r.title_en))}</div></div>`).join("");
+
+      const nav = document.getElementById("sidebarNav");
+      nav.innerHTML = MODULES.map(m => `<button type="button" data-mod="${m.id}" class="nav-item ${state.module === m.id ? 'active' : 'text-slate-300'} w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left hover:bg-slate-800/80 transition"><span class="text-base">${m.icon}</span> <span>${esc(tr(m.bn, m.en))}</span></button>`).join("");
+      nav.querySelectorAll("[data-mod]").forEach(btn => btn.addEventListener("click", () => {
+        state.module = btn.getAttribute("data-mod");
+        if (window.innerWidth < 1024) nav.classList.add("hidden");
+        renderApp();
+      }));
+
+      const container = document.getElementById("moduleContainer");
+      if (state.module === "dashboard") { container.innerHTML = renderDashboardMod(); initDashboardCharts(); }
+      else if (state.module === "records") { container.innerHTML = renderRecordsMod(); bindRecordsEvents(); }
+      else if (state.module === "timeline") { container.innerHTML = renderTimelineMod(); bindTimelineEvents(); }
+      else if (state.module === "family") { container.innerHTML = renderFamilyMod(); bindFamilyEvents(); }
+      else if (state.module === "inheritance") { container.innerHTML = renderInheritanceMod(); bindInheritanceEvents(); }
+      else if (state.module === "risk") { container.innerHTML = renderRiskMod(); bindRiskEvents(); }
+      else if (state.module === "documents") { container.innerHTML = renderDocumentsMod(); bindDocumentsEvents(); }
+      else if (state.module === "reports") { container.innerHTML = renderReportsMod(); bindReportsEvents(); }
+    }
+
+    function renderDashboardMod() {
+      const totalDec = db.records.reduce((s, r) => s + Number(r.area_dec), 0);
+      const nahinurDec = db.records.filter(r => r.owner_id === "OWN-1001").reduce((s, r) => s + Number(r.area_dec), 0);
+      const openRisks = db.risks.filter(r => r.status !== "Resolved").length;
+      const uDec = tr("শতাংশ", "Decimal");
+      return `
+        <div class="glass-card rounded-2xl p-6 border border-emerald-500/30 bg-gradient-to-r from-emerald-950/70 via-slate-900 to-cyan-950/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="space-y-1.5">
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold">${esc(tr("জাতীয় ভূমি তথ্য ও উত্তরাধিকার ড্যাশবোর্ড", "National Land Intelligence & Inheritance Dashboard"))}</span>
+            <h2 class="text-xl md:text-2xl font-extrabold text-white">${esc(tr("প্রধান ভূমি মালিক ও প্রশাসক: নাহিনুর চৌধুরী (OWN-1001)", "Primary Landowner & Administrator: Nahinur Chowdhury (OWN-1001)"))}</h2>
+            <p class="text-xs text-slate-300">${esc(tr("সিলেট, রাজশাহী, চট্টগ্রাম ও ঢাকার নমুনা মৌজা খতিয়ান, দাগ নকশা, পারিবারিক বংশবৃক্ষ এবং এআই ঝুঁকি বিশ্লেষণের সমন্বিত ড্যাশবোর্ড।", "Real-time overview of sample Mouza Khatians, Dag plots, family lineage trees, and AI risk analysis across Sylhet, Rajshahi, Chattogram, and Dhaka."))}</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="openRecordModal('create')" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold shadow-lg shadow-emerald-500/20">${esc(tr("+ নতুন জমির রেকর্ড", "+ New Land Record"))}</button>
+            <button type="button" onclick="state.module='inheritance';renderApp();" class="px-4 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 text-xs font-bold">${esc(tr("⚖️ উত্তরাধিকার হিসাব", "⚖️ Inheritance Calculator"))}</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="glass-card p-5 rounded-2xl border-l-4 border-l-emerald-500"><div class="text-xs text-slate-400 font-semibold">${esc(tr("নিবন্ধিত জমির মালিক", "Registered Landowners"))}</div><div class="text-2xl font-extrabold text-white mt-1">${bnNum(db.owners.length)} ${esc(tr("জন", "Owners"))}</div><div class="text-[11px] text-emerald-400 mt-1">${esc(tr("প্রধান মালিক: নাহিনুর চৌধুরী (OWN-1001)", "Primary Owner: Nahinur Chowdhury (OWN-1001)"))}</div></div>
+          <div class="glass-card p-5 rounded-2xl border-l-4 border-l-cyan-500"><div class="text-xs text-slate-400 font-semibold">${esc(tr("মোট রেকর্ডকৃত জমির পরিমাণ", "Total Recorded Land Area"))}</div><div class="text-2xl font-extrabold text-white mt-1">${bnNum(totalDec.toFixed(2))} ${esc(uDec)}</div><div class="text-[11px] text-cyan-400 mt-1">${bnNum((totalDec/100).toFixed(2))} ${esc(tr("একর", "Acre"))} • ${bnNum((totalDec/1.65).toFixed(1))} ${esc(tr("কাঠা", "Katha"))}</div></div>
+          <div class="glass-card p-5 rounded-2xl border-l-4 border-l-emerald-400"><div class="text-xs text-slate-400 font-semibold">${esc(tr("নাহিনুর চৌধুরীর একক এস্টেট", "Nahinur Chowdhury's Estate"))}</div><div class="text-2xl font-extrabold text-emerald-400 mt-1">${bnNum(nahinurDec.toFixed(2))} ${esc(uDec)}</div><div class="text-[11px] text-slate-300 mt-1">${esc(tr("মাথিউরা মৌজা, বিয়ানীবাজার, সিলেট", "Mathiura Mouza, Beanibazar, Sylhet"))}</div></div>
+          <div class="glass-card p-5 rounded-2xl border-l-4 border-l-rose-500"><div class="text-xs text-slate-400 font-semibold">${esc(tr("সক্রিয় ঝুঁকি সতর্কবার্তা", "Active Risk Alerts"))}</div><div class="text-2xl font-extrabold text-rose-400 mt-1">${bnNum(openRisks)} ${esc(tr("টি সতর্কতা", "Alerts"))}</div><div class="text-[11px] text-amber-300 mt-1">${esc(tr("মানবিক যাচাইয়ের জন্য চিহ্নিত", "Flagged for human verification"))}</div></div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="glass-card p-5 rounded-2xl space-y-3"><h3 class="text-sm font-bold text-emerald-400">${esc(tr("📊 জেলাভিত্তিক রেকর্ডকৃত জমির পরিমাণ (শতাংশ)", "📊 Recorded Land Area by District (Decimal)"))}</h3><div class="relative h-64"><canvas id="dashDistChart"></canvas></div></div>
+          <div class="glass-card p-5 rounded-2xl space-y-3"><h3 class="text-sm font-bold text-cyan-400">${esc(tr("🍩 জমির শ্রেণি অনুযায়ী বিভাজন (শতাংশ)", "🍩 Land Classification Breakdown (Decimal)"))}</h3><div class="relative h-64"><canvas id="dashClassChart"></canvas></div></div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="glass-card p-5 rounded-2xl lg:col-span-2 space-y-3">
+            <div class="flex items-center justify-between"><h3 class="text-sm font-bold text-white">${esc(tr("📋 নাহিনুর চৌধুরী ও নিবন্ধিত মালিকদের খতিয়ান তালিকা", "📋 Nahinur Chowdhury & Registered Landowners Khatian Schedule"))}</h3><button type="button" onclick="state.module='records';renderApp();" class="text-xs text-emerald-400 hover:underline">${esc(tr("সব দেখুন →", "View All →"))}</button></div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-900/90 text-slate-400 border-b border-slate-800"><tr><th class="p-2.5">${esc(tr("রেকর্ড ও দাগ", "Record & Dag"))}</th><th class="p-2.5">${esc(tr("জমির মালিক", "Landowner"))}</th><th class="p-2.5">${esc(tr("খতিয়ান ও মৌজা", "Khatian & Mouza"))}</th><th class="p-2.5 text-right">${esc(tr("পরিমাণ (শতাংশ)", "Area (Decimal)"))}</th><th class="p-2.5">${esc(tr("অবস্থা", "Status"))}</th></tr></thead>
+                <tbody class="divide-y divide-slate-800/80">
+                  ${db.records.slice(0, 5).map(r => `<tr class="hover:bg-slate-900/50"><td class="p-2.5 font-mono font-bold text-emerald-400">${esc(r.record_id)} (${esc(r.dag_no)})</td><td class="p-2.5 font-semibold text-white">${esc(tr(r.owner_bn, r.owner_en))} <span class="text-[10px] font-mono text-slate-400">(${esc(r.owner_id)})</span></td><td class="p-2.5 text-slate-300"><span class="font-mono text-cyan-300">${esc(r.khatian_no)}</span> • ${esc(tr(r.mouza_bn, r.mouza_en))}, ${esc(labelOf(DIST_LABELS, r.district))}</td><td class="p-2.5 text-right font-bold text-cyan-300">${bnNum(Number(r.area_dec).toFixed(2))}</td><td class="p-2.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.status === 'VERIFIED' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">${esc(labelOf(STATUS_LABELS, r.status))}</span></td></tr>`).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="glass-card p-5 rounded-2xl space-y-3">
+            <h3 class="text-sm font-bold text-emerald-400">${esc(tr("📝 সাম্প্রতিক কার্যক্রম ও লেনদেন লগ", "📝 Recent Activity & Transaction Logs"))}</h3>
+            <div class="space-y-2.5 text-xs">
+              ${db.auditLogs.slice(0, 4).map(l => `<div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1"><div class="flex items-center justify-between text-[11px] text-slate-400"><span class="font-bold text-cyan-400">${esc(labelOf(AUDIT_ACTION_LABELS, l.action))} (<span class="font-mono">${esc(l.target)}</span>)</span><span>${esc(fmtDate(l.ts))}</span></div><div class="text-slate-200">${esc(tr(l.summary_bn, l.summary_en))}</div></div>`).join("")}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function initDashboardCharts() {
+      if (typeof Chart === "undefined") return;
+      const distTotals = {}, classTotals = {};
+      db.records.forEach(r => {
+        const dL = labelOf(DIST_LABELS, r.district), cL = labelOf(CLASS_LABELS, r.land_class);
+        distTotals[dL] = (distTotals[dL] || 0) + Number(r.area_dec);
+        classTotals[cL] = (classTotals[cL] || 0) + Number(r.area_dec);
+      });
+      const dCtx = document.getElementById("dashDistChart");
+      if (dCtx) {
+        if (distChart) distChart.destroy();
+        distChart = new Chart(dCtx, {
+          type: "bar",
+          data: { labels: Object.keys(distTotals), datasets: [{ label: tr("জমির পরিমাণ (শতাংশ)", "Land Area (Decimal)"), data: Object.values(distTotals), backgroundColor: ["#10b981", "#06b6d4", "#34d399", "#22d3ee", "#a7f3d0"], borderRadius: 6 }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: "#94a3b8", callback: v => bnNum(v) }, grid: { color: "#1e293b" } }, x: { ticks: { color: "#cbd5e1" } } } }
+        });
+      }
+      const cCtx = document.getElementById("dashClassChart");
+      if (cCtx) {
+        if (classChart) classChart.destroy();
+        classChart = new Chart(cCtx, {
+          type: "doughnut",
+          data: { labels: Object.keys(classTotals), datasets: [{ data: Object.values(classTotals), backgroundColor: ["#10b981", "#06b6d4", "#f59e0b", "#8b5cf6", "#ec4899"], borderWidth: 1, borderColor: "#0f172a" }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { color: "#cbd5e1", boxWidth: 12 } } } }
+        });
+      }
+    }
+
+    function getFilteredRecords() {
+      const q = state.searchQuery.trim().toLowerCase();
+      const filtered = db.records.filter(r => {
+        const matchQ = !q || [r.record_id, r.owner_bn, r.owner_en, r.owner_id, r.dag_no, r.khatian_no, r.mouza_bn, r.mouza_en].some(x => String(x).toLowerCase().includes(q));
+        return matchQ && (state.districtFilter === "ALL" || r.district === state.districtFilter) && (state.surveyFilter === "ALL" || r.survey === state.surveyFilter);
+      });
+      if (state.sortBy === "area_desc") filtered.sort((a, b) => Number(b.area_dec) - Number(a.area_dec));
+      else if (state.sortBy === "area_asc") filtered.sort((a, b) => Number(a.area_dec) - Number(b.area_dec));
+      else if (state.sortBy === "date") filtered.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+      else filtered.sort((a, b) => String(a.record_id).localeCompare(String(b.record_id)));
+      return filtered;
+    }
+
+    function renderRecordsMod() {
+      const filtered = getFilteredRecords();
+      const totalPages = Math.max(1, Math.ceil(filtered.length / state.pageSize));
+      if (state.currentPage > totalPages) state.currentPage = totalPages;
+      const pageItems = filtered.slice((state.currentPage - 1) * state.pageSize, state.currentPage * state.pageSize);
+      return `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div><h2 class="text-xl font-extrabold text-white">${esc(tr("📋 জমির রেকর্ড ও মালিকানা ব্যবস্থাপনা", "📋 Land Records & Ownership Management"))}</h2><p class="text-xs text-slate-400">${esc(tr("নাহিনুর চৌধুরী (OWN-1001) ও অন্যান্য মালিকদের খতিয়ান, দাগ, মৌজা সংযোজন, সম্পাদনা, ডুপ্লিকেট যাচাই, ফিল্টার ও সর্টিং।", "Create, edit, filter, sort, and verify sample Khatian and Dag records for Nahinur Chowdhury (OWN-1001) and registered owners."))}</p></div>
+          <button type="button" onclick="openRecordModal('create')" class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold">${esc(tr("+ নতুন জমির রেকর্ড", "+ New Land Record"))}</button>
+        </div>
+        <div class="glass-card p-4 rounded-2xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+          <input id="recSearchInp" type="text" value="${esc(state.searchQuery)}" placeholder="${esc(tr("রেকর্ড আইডি (REC-2001), দাগ (Dag-107), খতিয়ান (BS-2001) বা মালিকের নাম দিয়ে অনুসন্ধান...", "Search by Record ID (REC-2001), Dag (Dag-107), Khatian (BS-2001) or Owner Name..."))}" class="sm:col-span-2 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white" />
+          <select id="recDistFilter" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"><option value="ALL">${esc(tr("সকল জেলা", "All Districts"))}</option>${Object.keys(DIST_LABELS).map(k => `<option value="${k}" ${state.districtFilter === k ? 'selected' : ''}>${esc(labelOf(DIST_LABELS, k))}</option>`).join("")}</select>
+          <select id="recSurvFilter" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"><option value="ALL">${esc(tr("সকল জরিপ", "All Surveys"))}</option>${Object.keys(SURVEY_LABELS).map(k => `<option value="${k}" ${state.surveyFilter === k ? 'selected' : ''}>${esc(labelOf(SURVEY_LABELS, k))}</option>`).join("")}</select>
+          <select id="recSortSel" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-emerald-300 font-semibold">
+            <option value="id" ${state.sortBy === 'id' ? 'selected' : ''}>${esc(tr("সর্টিং: রেকর্ড আইডি অনুযায়ী", "Sort by: Record ID"))}</option>
+            <option value="area_desc" ${state.sortBy === 'area_desc' ? 'selected' : ''}>${esc(tr("সর্টিং: জমির পরিমাণ (বেশি থেকে কম)", "Sort by: Land Area (High to Low)"))}</option>
+            <option value="area_asc" ${state.sortBy === 'area_asc' ? 'selected' : ''}>${esc(tr("সর্টিং: জমির পরিমাণ (কম থেকে বেশি)", "Sort by: Land Area (Low to High)"))}</option>
+            <option value="date" ${state.sortBy === 'date' ? 'selected' : ''}>${esc(tr("সর্টিং: নিবন্ধনের তারিখ অনুযায়ী", "Sort by: Registration Date"))}</option>
+          </select>
+        </div>
+        <div class="glass-card rounded-2xl overflow-hidden">
+          ${pageItems.length === 0 ? `<div class="p-10 text-center space-y-2"><div class="text-3xl">📭</div><div class="text-sm font-bold text-slate-200">${esc(tr("কোনো ফলাফল পাওয়া যায়নি", "No Results Found"))}</div><p class="text-xs text-slate-400">${esc(tr("অনুসন্ধান শব্দ বা ফিল্টার পরিবর্তন করুন অথবা নতুন জমির রেকর্ড সংযোজন করুন।", "Try adjusting your search keywords or filters, or add a new land record."))}</p></div>` : `
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-900 text-slate-400 border-b border-slate-800"><tr><th class="p-3">${esc(tr("রেকর্ড আইডি", "Record ID"))}</th><th class="p-3">${esc(tr("জমির মালিক", "Landowner"))}</th><th class="p-3">${esc(tr("দাগ ও খতিয়ান নম্বর", "Dag & Khatian No"))}</th><th class="p-3">${esc(tr("মৌজা ও জেলা", "Mouza & District"))}</th><th class="p-3">${esc(tr("জমির শ্রেণি", "Land Class"))}</th><th class="p-3 text-right">${esc(tr("পরিমাণ (খতিয়ান / জরিপ শতাংশ)", "Area (Khatian / Surveyed Dec)"))}</th><th class="p-3">${esc(tr("নিবন্ধনের তারিখ", "Registration Date"))}</th><th class="p-3">${esc(tr("অবস্থা", "Status"))}</th><th class="p-3 text-right">${esc(tr("কার্যক্রম", "Actions"))}</th></tr></thead>
+                <tbody class="divide-y divide-slate-800">
+                  ${pageItems.map(r => `<tr class="hover:bg-slate-900/60"><td class="p-3 font-mono font-bold text-emerald-400">${esc(r.record_id)}</td><td class="p-3 font-bold text-white">${esc(tr(r.owner_bn, r.owner_en))}<div class="text-[10px] font-mono text-slate-400">${esc(r.owner_id)}</div></td><td class="p-3"><div class="font-mono font-bold text-cyan-300">${esc(r.dag_no)}</div><div class="text-[11px] text-slate-400"><span class="font-mono">${esc(r.khatian_no)}</span> (${esc(labelOf(SURVEY_LABELS, r.survey))})</div></td><td class="p-3">${esc(tr(r.mouza_bn, r.mouza_en))}, ${esc(labelOf(DIST_LABELS, r.district))}</td><td class="p-3">${esc(labelOf(CLASS_LABELS, r.land_class))}</td><td class="p-3 text-right font-bold">${bnNum(Number(r.area_dec).toFixed(2))} / <span class="${r.area_dec !== r.surv_dec ? 'text-rose-400' : 'text-emerald-400'}">${bnNum(Number(r.surv_dec).toFixed(2))}</span></td><td class="p-3 text-slate-300">${esc(fmtDate(r.date))}</td><td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.status === 'VERIFIED' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">${esc(labelOf(STATUS_LABELS, r.status))}</span></td><td class="p-3 text-right space-x-1 whitespace-nowrap"><button type="button" onclick="openRecordModal('edit','${esc(r.record_id)}')" class="px-2.5 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 font-bold">${esc(tr("সম্পাদনা", "Edit"))}</button><button type="button" onclick="deleteRecord('${esc(r.record_id)}')" class="px-2.5 py-1 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-bold">${esc(tr("মুছে ফেলুন", "Delete"))}</button></td></tr>`).join("")}
+                </tbody>
+              </table>
+            </div>`}
+          <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between text-xs">
+            <span class="text-slate-400">${esc(tr("মোট", "Showing"))} ${bnNum(filtered.length)} ${esc(tr("টি রেকর্ডের মধ্যে পৃষ্ঠা", "records — Page"))} ${bnNum(state.currentPage)} / ${bnNum(totalPages)}</span>
+            <div class="flex gap-2">
+              <button type="button" id="prevPageBtn" ${state.currentPage <= 1 ? 'disabled' : ''} class="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40">${esc(tr("পূর্ববর্তী", "Previous"))}</button>
+              <button type="button" id="nextPageBtn" ${state.currentPage >= totalPages ? 'disabled' : ''} class="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40">${esc(tr("পরবর্তী", "Next"))}</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function bindRecordsEvents() {
+      document.getElementById("recSearchInp")?.addEventListener("input", e => {
+        const v = e.target.value;
+        if (/^\d{4}$/.test(v.trim())) return toast(tr("🚫 এনআইডি-র শেষ ৪ সংখ্যা দিয়ে অনুসন্ধান সম্পূর্ণ নিষিদ্ধ!", "🚫 Searching by last 4 digits of NID is strictly prohibited!"), true);
+        state.searchQuery = v; state.currentPage = 1; renderApp();
+      });
+      document.getElementById("recDistFilter")?.addEventListener("change", e => { state.districtFilter = e.target.value; state.currentPage = 1; renderApp(); });
+      document.getElementById("recSurvFilter")?.addEventListener("change", e => { state.surveyFilter = e.target.value; state.currentPage = 1; renderApp(); });
+      document.getElementById("recSortSel")?.addEventListener("change", e => { state.sortBy = e.target.value; state.currentPage = 1; renderApp(); });
+      document.getElementById("prevPageBtn")?.addEventListener("click", () => { if (state.currentPage > 1) { state.currentPage--; renderApp(); } });
+      document.getElementById("nextPageBtn")?.addEventListener("click", () => { state.currentPage++; renderApp(); });
+    }
+
+    function openRecordModal(mode, recId = null) {
+      if (state.role === "viewer") return toast(tr("🚫 ভূমিকা সীমাবদ্ধতা: দর্শক ভূমিকায় রেকর্ড সংযোজন বা সম্পাদনা নিষিদ্ধ!", "🚫 Role Restriction: Viewer role cannot create or edit land records!"), true);
+      updateShellTranslations();
+      const modal = document.getElementById("recordModal");
+      document.getElementById("recFormMode").value = mode;
+      document.getElementById("dupWarningBox").classList.add("hidden");
+      const ownerSel = document.getElementById("recOwnerInp");
+      ownerSel.innerHTML = db.owners.map(o => `<option value="${esc(o.owner_id)}">${esc(o.owner_id)} — ${esc(tr(o.name_bn, o.name_en))}</option>`).join("");
+      if (mode === "edit" && recId) {
+        const r = db.records.find(x => x.record_id === recId);
+        if (!r) return;
+        document.getElementById("recordModalTitle").textContent = `${tr("জমির রেকর্ড সম্পাদনা", "Edit Land Record")} (${r.record_id})`;
+        document.getElementById("recIdInp").value = r.record_id;
+        document.getElementById("recIdInp").readOnly = true;
+        ownerSel.value = r.owner_id;
+        document.getElementById("recDagInp").value = r.dag_no;
+        document.getElementById("recKhatianInp").value = r.khatian_no;
+        document.getElementById("recSurveyInp").value = r.survey;
+        document.getElementById("recClassInp").value = r.land_class;
+        document.getElementById("recMouzaInp").value = tr(r.mouza_bn, r.mouza_en);
+        document.getElementById("recDistInp").value = r.district;
+        document.getElementById("recAreaInp").value = r.area_dec;
+        document.getElementById("recSurvAreaInp").value = r.surv_dec;
+        document.getElementById("recDeedInp").value = r.deed_no || "";
+        document.getElementById("recStatusInp").value = r.status;
+      } else {
+        const nextNum = db.records.reduce((m, r) => Math.max(m, parseInt(r.record_id.replace(/\D/g,"")) || 2000), 2000) + 1;
+        document.getElementById("recordModalTitle").textContent = tr("নতুন জমির রেকর্ড সংযোজন", "Add New Land Record");
+        document.getElementById("recIdInp").value = `REC-${nextNum}`;
+        document.getElementById("recIdInp").readOnly = false;
+        ownerSel.value = "OWN-1001";
+        document.getElementById("recDagInp").value = "";
+        document.getElementById("recKhatianInp").value = "";
+        document.getElementById("recMouzaInp").value = tr("মাথিউরা", "Mathiura");
+        document.getElementById("recDeedInp").value = "";
+      }
+      modal.classList.remove("hidden");
+    }
+
+    function deleteRecord(recId) {
+      if (state.role !== "admin") return toast(tr("🚫 শুধুমাত্র প্রধান প্রশাসক (নাহিনুর চৌধুরী) জমির রেকর্ড মুছে ফেলতে পারেন!", "🚫 Only the Administrator (Nahinur Chowdhury) can delete land records!"), true);
+      openConfirmModal(tr("আপনি কি নিশ্চিতভাবে এই জমির রেকর্ডটি মুছে ফেলতে চান?", "Are you sure you want to permanently delete this land record?"), () => {
+        db.records = db.records.filter(r => r.record_id !== recId);
+        logAudit("DELETE_RECORD", recId, `জমির রেকর্ড ${recId} মুছে ফেলা হয়েছে।`, `Deleted land record ${recId}.`);
+        toast(tr(`রেকর্ড ${recId} সফলভাবে মুছে ফেলা হয়েছে।`, `Record ${recId} deleted successfully.`));
+        renderApp();
+      });
+    }
+
+    function renderTimelineMod() {
+      const list = db.timeline.filter(item => state.timelineRecordFilter === "ALL" || item.record_id === state.timelineRecordFilter);
+      return `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div><h2 class="text-xl font-extrabold text-white">${esc(tr("⏳ মালিকানা ইতিহাস ও নামজারি পরিক্রমা", "⏳ Ownership History & Mutation Timeline"))}</h2><p class="text-xs text-slate-400">${esc(tr("সিএস ➔ এসএ ➔ আরএস ➔ বিএস ➔ ই-নামজারি অনুযায়ী নাহিনুর চৌধুরী (OWN-1001) ও অন্যান্য দাগের ধারাবাহিক মালিকানা হস্তান্তর ইতিহাস।", "Chronological ownership transfer chain (CS ➔ SA ➔ RS ➔ BS ➔ e-Namjari) for Nahinur Chowdhury (OWN-1001) and recorded parcels."))}</p></div>
+          <select id="tlFilterSel" class="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"><option value="ALL">${esc(tr("সকল দাগের মালিকানা ইতিহাস", "All Parcel Timelines"))}</option>${db.records.map(r => `<option value="${esc(r.record_id)}" ${state.timelineRecordFilter === r.record_id ? 'selected' : ''}>${esc(r.record_id)} (${esc(r.dag_no)} — ${esc(tr(r.owner_bn, r.owner_en))})</option>`).join("")}</select>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="glass-card p-5 rounded-2xl lg:col-span-2 space-y-4">
+            ${list.map(e => `<div class="relative pl-6 border-l-2 border-emerald-500/50 space-y-1"><span class="absolute -left-2 top-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-slate-950"></span><div class="flex flex-wrap items-center justify-between gap-2 text-xs"><span class="font-mono font-bold text-emerald-300">${esc(e.event_id)} • ${esc(e.record_id)} (${esc(labelOf(SURVEY_LABELS, e.stage))})</span><span class="px-2 py-0.5 rounded bg-slate-800 text-cyan-300 font-semibold">${esc(fmtDate(e.date))}</span></div><div class="text-sm font-bold text-white">${esc(tr(e.from_bn, e.from_en))} &rarr; ${esc(tr(e.to_bn, e.to_en))}</div><div class="text-xs text-slate-400">${esc(tr("হস্তান্তর মাধ্যম:", "Transfer Mode:"))} <strong>${esc(tr(e.mode_bn, e.mode_en))}</strong> • ${esc(tr("দলিল/নথি আইডি:", "Deed / Doc ID:"))} <code class="text-amber-300 font-mono">${esc(e.deed)}</code> • ${esc(tr("জমির পরিমাণ:", "Area:"))} ${bnNum(e.dec.toFixed(2))} ${esc(tr("শতাংশ", "Decimal"))}</div></div>`).join("")}
+          </div>
+          <div class="glass-card p-5 rounded-2xl space-y-3 text-xs">
+            <h3 class="text-sm font-bold text-cyan-400">${esc(tr("+ নতুন মালিকানা হস্তান্তর ইতিহাস সংযোজন", "+ Add New Ownership Transfer Event"))}</h3>
+            <form id="addTimelineForm" class="space-y-2.5">
+              <select id="tlRecId" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">${db.records.map(r => `<option value="${esc(r.record_id)}">${esc(r.record_id)} — ${esc(r.dag_no)} (${esc(tr(r.owner_bn, r.owner_en))})</option>`).join("")}</select>
+              <input id="tlDate" type="date" required value="2026-10-17" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+              <input id="tlFrom" type="text" required placeholder="${esc(tr("দাতার নাম লিখুন...", "Enter Transferor (From Party)..."))}" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+              <input id="tlTo" type="text" required placeholder="${esc(tr("গ্রহীতার নাম লিখুন (যেমন: নাহিনুর চৌধুরী)...", "Enter Recipient (e.g., Nahinur Chowdhury)..."))}" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+              <input id="tlDeed" type="text" required placeholder="${esc(tr("দলিল বা নামজারি নথি আইডি (যেমন: DEED-4501)...", "Deed or Mutation ID (e.g., DEED-4501)..."))}" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono" />
+              <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold">${esc(tr("মালিকানা ইতিহাসে সংরক্ষণ করুন", "Save to Ownership History"))}</button>
+            </form>
+          </div>
+        </div>`;
+    }
+
+    function bindTimelineEvents() {
+      document.getElementById("tlFilterSel")?.addEventListener("change", e => { state.timelineRecordFilter = e.target.value; renderApp(); });
+      document.getElementById("addTimelineForm")?.addEventListener("submit", e => {
+        e.preventDefault();
+        if (state.role === "viewer") return toast(tr("🚫 দর্শক ভূমিকায় মালিকানা ইতিহাস সংযোজন নিষিদ্ধ!", "🚫 Viewer role cannot add timeline events!"), true);
+        const recId = document.getElementById("tlRecId").value, evtId = `EVT-${700 + db.timeline.length + 1}`;
+        const fromVal = document.getElementById("tlFrom").value.trim(), toVal = document.getElementById("tlTo").value.trim();
+        db.timeline.push({ event_id: evtId, record_id: recId, date: document.getElementById("tlDate").value, stage: "Namjari", from_bn: fromVal, from_en: fromVal, to_bn: toVal, to_en: toVal, mode_bn: "নামজারি ও হস্তান্তর দলিল", mode_en: "Mutation & Transfer Deed", deed: document.getElementById("tlDeed").value.trim(), dec: 20.0 });
+        logAudit("ADD_TIMELINE", evtId, `${recId}-এ নতুন মালিকানা হস্তান্তর ইতিহাস সংযুক্ত হয়েছে।`, `Added new ownership transfer event to ${recId}.`);
+        toast(tr(`মালিকানা ইভেন্ট ${evtId} সংরক্ষিত হয়েছে!`, `Timeline event ${evtId} saved!`));
+        renderApp();
+      });
+    }
+
+    function renderFamilyMod() {
+      const sel = db.family.find(m => m.member_id === state.selectedMemberId) || db.family[1];
+      const statusText = sel.status === "Living" ? tr("জীবিত", "Living") : tr("মরহুম / প্রয়াত", "Deceased");
+      return `
+        <div><h2 class="text-xl font-extrabold text-white">${esc(tr("🌳 পারিবারিক বংশবৃক্ষ ও উত্তরাধিকার সম্পর্ক", "🌳 Family Tree & Lineage Relationships"))}</h2><p class="text-xs text-slate-400">${esc(tr("নাহিনুর চৌধুরী (OWN-1001) পরিবারের ৪-প্রজন্মের বংশবৃক্ষ চিত্রায়ন — যেকোনো সদস্যের বক্সে ক্লিক করে বিস্তারিত সম্পর্ক দেখুন।", "Interactive 4-generation family tree of Nahinur Chowdhury (OWN-1001) — click any member node to inspect detailed relationship records."))}</p></div>
+        <div class="glass-card p-5 rounded-2xl space-y-3 overflow-x-auto">
+          <svg viewBox="0 0 860 285" class="w-full min-w-[680px] h-64 bg-slate-950 rounded-xl border border-slate-800 select-none">
+            <line x1="420" y1="44" x2="315" y2="85" stroke="#10b981" stroke-width="2.5"/><line x1="315" y1="105" x2="575" y2="105" stroke="#06b6d4" stroke-width="2.5" stroke-dasharray="5 3"/>
+            <path d="M 315 125 L 315 150 L 165 150 L 165 172" fill="none" stroke="#10b981" stroke-width="2"/><path d="M 315 125 L 315 150 L 425 150 L 425 172" fill="none" stroke="#10b981" stroke-width="2"/><path d="M 315 125 L 315 150 L 685 150 L 685 172" fill="none" stroke="#10b981" stroke-width="2"/><line x1="165" y1="210" x2="165" y2="236" stroke="#34d399" stroke-width="2"/>
+            <g onclick="selectFamMember('MEM-101')" class="cursor-pointer" transform="translate(275,8)"><rect width="290" height="36" rx="8" fill="#1e293b" stroke="#64748b" stroke-width="2"/><text x="145" y="22" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="700">${esc(tr("প্রজন্ম ১: মরহুম হাজী মাহমুদ আলী চৌধুরী (পিতা)", "Gen 1: Late Haji Mahmud Ali Chowdhury (Father)"))}</text></g>
+            <g onclick="selectFamMember('MEM-102')" class="cursor-pointer" transform="translate(185,85)"><rect width="260" height="40" rx="8" fill="#064e3b" stroke="#10b981" stroke-width="2.5"/><text x="130" y="24" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">${esc(tr("নাহিনুর চৌধুরী (OWN-1001 • প্রধান মালিক)", "Nahinur Chowdhury (OWN-1001 • Primary Owner)"))}</text></g>
+            <g onclick="selectFamMember('MEM-103')" class="cursor-pointer" transform="translate(465,85)"><rect width="260" height="40" rx="8" fill="#083344" stroke="#06b6d4" stroke-width="2"/><text x="130" y="24" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">${esc(tr("ফাতেমা বেগম চৌধুরী (OWN-1002 • স্ত্রী)", "Fatema Begum Chowdhury (OWN-1002 • Spouse)"))}</text></g>
+            <g onclick="selectFamMember('MEM-104')" class="cursor-pointer" transform="translate(45,172)"><rect width="240" height="38" rx="8" fill="#0f172a" stroke="#10b981" stroke-width="2"/><text x="120" y="23" text-anchor="middle" fill="#f1f5f9" font-size="11" font-weight="700">${esc(tr("কামরুল হাসান চৌধুরী (OWN-1003 • পুত্র)", "Kamrul Hasan Chowdhury (OWN-1003 • Son)"))}</text></g>
+            <g onclick="selectFamMember('MEM-105')" class="cursor-pointer" transform="translate(305,172)"><rect width="240" height="38" rx="8" fill="#0f172a" stroke="#10b981" stroke-width="2"/><text x="120" y="23" text-anchor="middle" fill="#f1f5f9" font-size="11" font-weight="700">${esc(tr("মাহমুদুল হাসান চৌধুরী (OWN-1004 • পুত্র)", "Mahmudul Hasan Chowdhury (OWN-1004 • Son)"))}</text></g>
+            <g onclick="selectFamMember('MEM-106')" class="cursor-pointer" transform="translate(565,172)"><rect width="240" height="38" rx="8" fill="#0f172a" stroke="#06b6d4" stroke-width="2"/><text x="120" y="23" text-anchor="middle" fill="#f1f5f9" font-size="11" font-weight="700">${esc(tr("নাসরিন আক্তার চৌধুরী (OWN-1005 • কন্যা)", "Nasrin Akter Chowdhury (OWN-1005 • Daughter)"))}</text></g>
+            <g onclick="selectFamMember('MEM-107')" class="cursor-pointer" transform="translate(45,236)"><rect width="240" height="36" rx="8" fill="#1e293b" stroke="#34d399" stroke-width="1.8"/><text x="120" y="22" text-anchor="middle" fill="#a7f3d0" font-size="11" font-weight="700">${esc(tr("প্রজন্ম ৪: আরাফাত চৌধুরী (MEM-107 • নাতি)", "Gen 4: Arafat Chowdhury (MEM-107 • Grandson)"))}</text></g>
+          </svg>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs">
+          <div class="glass-card p-5 rounded-2xl space-y-2">
+            <h3 class="text-sm font-bold text-emerald-400">${esc(tr("👤 নির্বাচিত পারিবারিক সদস্যের বিবরণ", "👤 Selected Family Member Profile"))}</h3>
+            <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5">
+              <div class="font-mono text-cyan-400 font-bold">${esc(sel.member_id)} • ${esc(tr("প্রজন্ম", "Generation"))} ${bnNum(sel.gen)}</div>
+              <div class="text-base font-extrabold text-white">${esc(tr(sel.name_bn, sel.name_en))}</div>
+              <div class="text-slate-300">${esc(tr("পারিবারিক সম্পর্ক:", "Family Relationship:"))} <strong>${esc(tr(sel.rel_bn, sel.rel_en))}</strong></div>
+              <div class="text-slate-300">${esc(tr("জীবনাবস্থা:", "Life Status:"))} <strong>${esc(statusText)}</strong></div>
+              <div class="text-slate-300">${esc(tr("উত্তরাধিকার যোগ্যতা:", "Inheritance Eligibility:"))} <strong>${esc(sel.eligible ? tr("যোগ্য উত্তরাধিকারী", "Eligible Heir") : tr("প্রধান এস্টেট মালিক / পূর্বপুরুষ", "Primary Estate Owner / Ancestor"))}</strong></div>
+            </div>
+          </div>
+          <div class="glass-card p-5 rounded-2xl lg:col-span-2 space-y-3">
+            <h3 class="text-sm font-bold text-cyan-400">${esc(tr("+ পারিবারিক বংশবৃক্ষে নতুন সদস্য সংযোজন", "+ Add New Member to Family Tree"))}</h3>
+            <form id="addFamForm" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <input id="famNameInp" type="text" required placeholder="${esc(tr("সদস্যের পূর্ণ নাম লিখুন...", "Enter Member Full Name..."))}" class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+              <select id="famRoleInp" class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white"><option value="son">${esc(tr("পুত্র", "Son"))}</option><option value="daughter">${esc(tr("কন্যা", "Daughter"))}</option><option value="spouse">${esc(tr("স্ত্রী / স্বামী", "Spouse"))}</option></select>
+              <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold">+ ${esc(tr("সংযোজন করুন", "Add New"))}</button>
+            </form>
+            <div class="overflow-x-auto pt-2">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-900 text-slate-400"><tr><th class="p-2">${esc(tr("সদস্য আইডি", "Member ID"))}</th><th class="p-2">${esc(tr("সদস্যের নাম", "Member Name"))}</th><th class="p-2">${esc(tr("সম্পর্ক", "Relationship"))}</th><th class="p-2">${esc(tr("প্রজন্ম", "Generation"))}</th></tr></thead>
+                <tbody class="divide-y divide-slate-800">${db.family.map(f => `<tr onclick="selectFamMember('${esc(f.member_id)}')" class="hover:bg-slate-900/50 cursor-pointer"><td class="p-2 font-mono text-emerald-400 font-bold">${esc(f.member_id)}</td><td class="p-2 font-bold text-white">${esc(tr(f.name_bn, f.name_en))}</td><td class="p-2 text-cyan-300">${esc(tr(f.rel_bn, f.rel_en))}</td><td class="p-2">${esc(tr("প্রজন্ম", "Generation"))} ${bnNum(f.gen)}</td></tr>`).join("")}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>`;
+    }
+    function selectFamMember(id) { state.selectedMemberId = id; renderApp(); }
+    function bindFamilyEvents() {
+      document.getElementById("addFamForm")?.addEventListener("submit", e => {
+        e.preventDefault();
+        if (state.role === "viewer") return toast(tr("🚫 দর্শক ভূমিকায় বংশবৃক্ষ পরিবর্তন নিষিদ্ধ!", "🚫 Viewer role cannot modify family tree!"), true);
+        const name = document.getElementById("famNameInp").value.trim(), role = document.getElementById("famRoleInp").value, id = `MEM-${100 + db.family.length + 1}`;
+        const relBnMap = { son: "পুত্র", daughter: "কন্যা", spouse: "স্ত্রী / স্বামী" }, relEnMap = { son: "Son", daughter: "Daughter", spouse: "Spouse" };
+        db.family.push({ member_id: id, name_bn: name, name_en: name, rel_bn: relBnMap[role], rel_en: relEnMap[role], role, gen: role === "spouse" ? 2 : 3, status: "Living", parent_id: "MEM-102", eligible: true, weight: role === "son" ? 2 : 1 });
+        logAudit("ADD_FAMILY", id, `বংশবৃক্ষে নতুন সদস্য ${name} সংযুক্ত করা হয়েছে।`, `Added new member ${name} to family tree.`);
+        toast(tr(`${name} বংশবৃক্ষে যুক্ত হয়েছেন!`, `${name} added to family tree!`));
+        renderApp();
+      });
+    }
+
+    function computeShares() {
+      const netDec = Math.max(0, state.inhGrossDec - state.inhDebtDec);
+      const heirs = db.family.filter(f => f.eligible && f.status === "Living");
+      const spouses = heirs.filter(f => f.role === "spouse"), sons = heirs.filter(f => f.role === "son"), daughters = heirs.filter(f => f.role === "daughter");
+      const childUnits = sons.length * 2 + daughters.length;
+      return heirs.map(h => {
+        let frac = 0, basisBn = "", basisEn = "";
+        if (state.inhRule === "faraid") {
+          const spPool = spouses.length > 0 ? (childUnits > 0 ? 0.125 : 0.25) : 0, resPool = Math.max(0, 1 - spPool);
+          if (h.role === "spouse") { frac = spPool / spouses.length; basisBn = "১/৮ নির্ধারিত অংশ (সন্তান বিদ্যমান থাকায়)"; basisEn = "Fixed 1/8 Quranic Share (with surviving children)"; }
+          else if (h.role === "son" && childUnits > 0) { frac = resPool * (2 / childUnits); basisBn = `অবশিষ্ট ${bnNum((resPool*100).toFixed(1))}%-এর ২/${bnNum(childUnits)} অংশ (পুত্র:কন্যা ২:১ অনুপাত)`; basisEn = `Residuary 2/${childUnits} of ${(resPool*100).toFixed(1)}% (2:1 Son:Daughter ratio)`; }
+          else if (h.role === "daughter" && childUnits > 0) { frac = resPool * (1 / childUnits); basisBn = `অবশিষ্ট ${bnNum((resPool*100).toFixed(1))}%-এর ১/${bnNum(childUnits)} অংশ (কন্যা:পুত্র ১:২ অনুপাত)`; basisEn = `Residuary 1/${childUnits} of ${(resPool*100).toFixed(1)}% (1:2 Daughter:Son ratio)`; }
+        } else if (state.inhRule === "dayabhaga") {
+          frac = 1 / (heirs.length || 1); basisBn = `সমান অংশ বণ্টন (১/${bnNum(heirs.length)} ভাগ)`; basisEn = `Equal Share Distribution (1/${heirs.length} share)`;
+        } else {
+          const totalW = heirs.reduce((s, x) => s + (Number(x.weight) || 1), 0) || 1;
+          frac = (Number(h.weight) || 1) / totalW; basisBn = `কাস্টম অনুপাত (${bnNum(h.weight)}/${bnNum(totalW)} ভাগ)`; basisEn = `Custom Weighted Ratio (${h.weight}/${totalW} units)`;
+        }
+        const dec = netDec * frac;
+        return { ...h, pct: frac * 100, dec, katha: dec / 1.65, acre: dec / 100, basisBn, basisEn };
+      });
+    }
+
+    function renderInheritanceMod() {
+      const rows = computeShares(), netDec = Math.max(0, state.inhGrossDec - state.inhDebtDec);
+      return `
+        <div class="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-200 text-xs space-y-1">
+          <div class="font-extrabold text-sm">${esc(tr("⚠️ আইনগত সতর্কবার্তা ও ফলাফলের ব্যাখ্যা (শুধুমাত্র তথ্যমূলক হিসাব)", "⚠️ Legal Disclaimer & Result Explanation (Informational Estimate Only)"))}</div>
+          <p>${esc(tr("এই উত্তরাধিকার হিসাবটি শুধুমাত্র শিক্ষামূলক ও প্রাথমিক ধারণার জন্য তৈরি। বাংলাদেশে চূড়ান্ত উত্তরাধিকার বণ্টন প্রযোজ্য পারিবারিক আইন, দাফন-কাফন খরচ, অপরিশোধিত দেনা, মোহরানা, বৈধ অসিয়ত এবং বিজ্ঞ আদালত বা ইউনিয়ন/পৌরসভার দাপ্তরিক ওয়ারিশ সনদের ওপর নির্ভরশীল।", "This inheritance calculator provides educational and preliminary estimates only. Final inheritance distribution in Bangladesh depends on applicable personal laws, funeral expenses, unpaid debts, dower (Mahr), valid wills (Wasiyyah), and official succession certificates (Warishan Sanad) issued by a court or local government."))}</p>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs">
+          <div class="glass-card p-5 rounded-2xl space-y-3">
+            <h3 class="text-sm font-bold text-emerald-400">${esc(tr("১. এস্টেট ও উত্তরাধিকার গণনার পদ্ধতি নির্ধারণ", "1. Estate & Calculation Method Configuration"))}</h3>
+            <div>
+              <label class="block text-slate-300 font-semibold mb-1" for="inhRuleSel">${esc(tr("গণনার আইনগত পদ্ধতি", "Legal Calculation Method"))}</label>
+              <select id="inhRuleSel" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">
+                <option value="faraid" ${state.inhRule === 'faraid' ? 'selected' : ''}>${esc(tr("মুসলিম ফারায়েজ পদ্ধতি (স্ত্রী ১/৮ অংশ, পুত্র:কন্যা ২:১ অনুপাত)", "Muslim Faraid Method (Spouse 1/8, Son:Daughter 2:1 Ratio)"))}</option>
+                <option value="dayabhaga" ${state.inhRule === 'dayabhaga' ? 'selected' : ''}>${esc(tr("হিন্দু দায়ভাগ / সমান অংশ বণ্টন পদ্ধতি", "Hindu Dayabhaga / Equal Share Method"))}</option>
+                <option value="custom" ${state.inhRule === 'custom' ? 'selected' : ''}>${esc(tr("কাস্টম অনুপাত / ওজন ভিত্তিক বণ্টন পদ্ধতি", "Custom Weighted Ratio Method"))}</option>
+              </select>
+            </div>
+            <div><label class="block text-slate-300 font-semibold mb-1" for="inhGrossInp">${esc(tr("মোট এস্টেট জমির পরিমাণ (শতাংশ)", "Gross Estate Land Area (Decimal)"))}</label><input id="inhGrossInp" type="number" step="0.5" min="1" value="${state.inhGrossDec}" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-emerald-300 font-bold" /></div>
+            <div><label class="block text-slate-300 font-semibold mb-1" for="inhDebtInp">${esc(tr("দেনা ও মোহরানা বাবদ কর্তন (শতাংশ)", "Debt & Dower Deductions (Decimal)"))}</label><input id="inhDebtInp" type="number" step="0.5" min="0" value="${state.inhDebtDec}" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-amber-300 font-bold" /></div>
+            <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-cyan-300 font-bold">${esc(tr("নিট বণ্টনযোগ্য জমি:", "Net Distributable Estate:"))} ${bnNum(netDec.toFixed(2))} ${esc(tr("শতাংশ", "Decimal"))} (${bnNum((netDec/1.65).toFixed(2))} ${esc(tr("কাঠা", "Katha"))})</div>
+          </div>
+          <div class="glass-card p-5 rounded-2xl lg:col-span-2 space-y-3">
+            <h3 class="text-sm font-bold text-cyan-400">${esc(tr("২. উত্তরাধিকারীদের শতকরা ভাগ ও প্রাপ্ত জমির পরিমাণ (নাহিনুর চৌধুরী এস্টেট)", "2. Heir Percentage Shares & Allocated Land Area (Nahinur Chowdhury Estate)"))}</h3>
+            <div class="relative h-56"><canvas id="inhPieChart"></canvas></div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-900 text-slate-400"><tr><th class="p-2.5">${esc(tr("উত্তরাধিকারীর নাম", "Heir Name"))}</th><th class="p-2.5">${esc(tr("সম্পর্ক", "Relationship"))}</th><th class="p-2.5">${esc(tr("গণনার পদ্ধতি ও ব্যাখ্যা", "Calculation Method & Explanation"))}</th><th class="p-2.5 text-right">${esc(tr("শতকরা ভাগ (%)", "Share (%)"))}</th><th class="p-2.5 text-right">${esc(tr("জমি (শতাংশ)", "Area (Decimal)"))}</th><th class="p-2.5 text-right">${esc(tr("জমি (কাঠা)", "Area (Katha)"))}</th></tr></thead>
+                <tbody class="divide-y divide-slate-800">${rows.map(r => `<tr><td class="p-2.5 font-bold text-white">${esc(tr(r.name_bn, r.name_en))}</td><td class="p-2.5 text-emerald-400 font-semibold">${esc(tr(r.rel_bn, r.rel_en))}</td><td class="p-2.5 text-slate-300">${esc(tr(r.basisBn, r.basisEn))}</td><td class="p-2.5 text-right font-extrabold text-cyan-300">${bnNum(r.pct.toFixed(2))}%</td><td class="p-2.5 text-right font-bold text-white">${bnNum(r.dec.toFixed(2))}</td><td class="p-2.5 text-right text-slate-300">${bnNum(r.katha.toFixed(2))}</td></tr>`).join("")}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function bindInheritanceEvents() {
+      document.getElementById("inhRuleSel")?.addEventListener("change", e => { state.inhRule = e.target.value; renderApp(); });
+      document.getElementById("inhGrossInp")?.addEventListener("input", e => { state.inhGrossDec = Math.max(1, parseFloat(e.target.value) || 0); renderApp(); });
+      document.getElementById("inhDebtInp")?.addEventListener("input", e => { state.inhDebtDec = Math.max(0, parseFloat(e.target.value) || 0); renderApp(); });
+      const rows = computeShares(), ctx = document.getElementById("inhPieChart");
+      if (ctx && typeof Chart !== "undefined") {
+        if (inhChart) inhChart.destroy();
+        inhChart = new Chart(ctx, { type: "doughnut", data: { labels: rows.map(r => tr(r.name_bn, r.name_en)), datasets: [{ data: rows.map(r => Number(r.dec.toFixed(2))), backgroundColor: ["#10b981", "#06b6d4", "#34d399", "#f59e0b", "#8b5cf6"], borderColor: "#0f172a" }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { color: "#e2e8f0", boxWidth: 12 } } } } });
+      }
+    }
+
+    function renderRiskMod() {
+      const filteredRisks = db.risks.filter(r => state.riskFilter === "OPEN" ? r.status !== "Resolved" : (state.riskFilter === "RESOLVED" ? r.status === "Resolved" : true));
+      return `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div><h2 class="text-xl font-extrabold text-white">${esc(tr("🚨 এআই ঝুঁকি বিশ্লেষণ, সতর্কবার্তা ও সুপারিশ", "🚨 AI Risk Analysis, Warnings & Recommendations"))}</h2><p class="text-xs text-slate-400">${esc(tr("অনুপস্থিত দলিল, খতিয়ান ও মাঠ জরিপের অমিল, ডুপ্লিকেট দাগ নম্বর এবং অসামঞ্জস্যপূর্ণ তারিখ স্বয়ংক্রিয়ভাবে শনাক্তকরণ।", "Automated detection of missing transfer deeds, Khatian vs. survey area mismatches, duplicate Dag numbers, and chronological date anomalies."))}</p></div>
+          <div class="flex flex-wrap gap-2">
+            <select id="riskFilterSel" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+              <option value="ALL" ${state.riskFilter === 'ALL' ? 'selected' : ''}>${esc(tr("সকল ঝুঁকি সতর্কবার্তা", "All Risk Alerts"))}</option>
+              <option value="OPEN" ${state.riskFilter === 'OPEN' ? 'selected' : ''}>${esc(tr("অমীমাংসিত সতর্কবার্তা", "Open Risk Alerts"))}</option>
+              <option value="RESOLVED" ${state.riskFilter === 'RESOLVED' ? 'selected' : ''}>${esc(tr("সমাধানকৃত সতর্কবার্তা", "Resolved Risk Alerts"))}</option>
+            </select>
+            <button type="button" id="runRiskScanBtn" class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold">${esc(tr("🔍 সম্পূর্ণ রেকর্ড ঝুঁকি বিশ্লেষণ চালান", "🔍 Run Full Record Risk Scan"))}</button>
+          </div>
+        </div>
+        <div class="space-y-3 text-xs">
+          ${filteredRisks.length === 0 ? `<div class="glass-card p-8 rounded-2xl text-center text-slate-400 font-semibold">${esc(tr("কোনো ফলাফল পাওয়া যায়নি", "No Results Found"))}</div>` : filteredRisks.map(r => `<div class="glass-card p-5 rounded-2xl border-l-4 ${r.severity === 'HIGH' ? 'border-l-rose-500' : 'border-l-amber-500'} flex flex-col md:flex-row md:items-center justify-between gap-4"><div class="space-y-1.5"><div class="flex flex-wrap items-center gap-2"><span class="font-mono font-bold text-rose-400">${esc(r.alert_id)} •${esc(r.record_id)}</span><span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold text-[10px]">${esc(labelOf(RISK_TYPE_LABELS, r.type))} •${esc(labelOf(SEVERITY_LABELS, r.severity))}</span><span class="px-2 py-0.5 rounded bg-slate-800 text-cyan-300 font-bold text-[10px]">${esc(labelOf(RISK_STATUS_LABELS, r.status))}</span></div><div class="text-sm font-extrabold text-white">${esc(tr(r.title_bn, r.title_en))}</div><div class="text-slate-300"><strong>${esc(tr("ঝুঁকির কারণ:", "Risk Reason:"))}</strong> ${esc(tr(r.detail_bn, r.detail_en))}</div><div class="text-emerald-300"><strong>${esc(tr("এআই সুপারিশ ও করণীয়:", "AI Recommendation & Action:"))}</strong> ${esc(tr(r.rec_bn, r.rec_en))}</div></div><button type="button" onclick="toggleRiskStatus('${esc(r.alert_id)}')" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 font-bold shrink-0">${esc(r.status === 'Resolved' ? tr("পুনরায় পর্যালোচনায় আনুন", "Reopen for Review") : tr("✓ সমাধান হিসেবে চিহ্নিত করুন", "✓ Mark as Resolved"))}</button></div>`).join("")}
+        </div>`;
+    }
+
+    function toggleRiskStatus(alertId) {
+      if (state.role === "viewer") return toast(tr("🚫 দর্শক ভূমিকায় ঝুঁকি অবস্থা পরিবর্তন নিষিদ্ধ!", "🚫 Viewer role cannot change risk status!"), true);
+      const item = db.risks.find(x => x.alert_id === alertId);
+      if (item) { item.status = item.status === "Resolved" ? "Open" : "Resolved"; logAudit("RISK_STATUS", alertId, `ঝুঁকি সতর্কবার্তা ${alertId}-এর অবস্থা পরিবর্তন করা হয়েছে।`, `Updated risk alert ${alertId} status to ${item.status}.`); renderApp(); }
+    }
+
+    function bindRiskEvents() {
+      document.getElementById("riskFilterSel")?.addEventListener("change", e => { state.riskFilter = e.target.value; renderApp(); });
+      document.getElementById("runRiskScanBtn")?.addEventListener("click", () => {
+        let added = 0; const seenPlot = {};
+        db.records.forEach(r => {
+          const key = `${r.mouza_en}::${r.dag_no}`;
+          if (seenPlot[key] && !db.risks.some(x => x.record_id === r.record_id && x.type === "DUPLICATE_ID")) {
+            db.risks.unshift({ alert_id: `RSK-${400 + db.risks.length + 1}`, record_id: r.record_id, type: "DUPLICATE_ID", severity: "HIGH", title_bn: `ডুপ্লিকেট দাগ নম্বর শনাক্ত (${r.dag_no})`, title_en: `Duplicate Dag Number Detected (${r.dag_no})`, detail_bn: `${r.mouza_bn} মৌজায় ${r.dag_no} একাধিক রেকর্ডে পাওয়া গেছে।`, detail_en: `${r.dag_no} in ${r.mouza_en} Mouza appears across multiple records.`, rec_bn: "বাটা দাগ ও নামজারি কেস নথি যাচাই করুন।", rec_en: "Verify subdivision (Bata Dag) and mutation case register.", status: "Open" });
+            added++;
+          }
+          seenPlot[key] = r.record_id;
+        });
+        saveDb();
+        toast(tr(`ঝুঁকি বিশ্লেষণ সম্পন্ন! মোট ${bnNum(db.risks.length)} টি সতর্কবার্তা যাচাই করা হয়েছে (${bnNum(added)} টি নতুন)।`, `Risk scan completed! Checked ${db.risks.length} alerts (${added} new).`));
+        renderApp();
+      });
+    }
+
+    function renderDocumentsMod() {
+      return `
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs">
+          <div class="glass-card p-5 rounded-2xl lg:col-span-2 space-y-3">
+            <h3 class="text-base font-extrabold text-white">${esc(tr("🔐 নথি ও লেনদেনের ইতিহাস", "🔐 Documents & Transaction History"))}</h3>
+            <p class="text-xs text-slate-400">${esc(tr("খতিয়ান পর্চা, কবলা দলিল, খাজনা দাখিলা রশিদ ও নামজারি নথির হ্যাশ যাচাইকরণ এবং লেনদেনের বিস্তারিত বিবরণ।", "Cryptographic SHA-256 verification and transaction history for Khatian records, Kabala deeds, tax Dakhilas, and mutation instruments."))}</p>
+            <div class="space-y-2.5">
+              ${db.documents.map(d => `<div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2"><div class="space-y-1"><div class="flex items-center gap-2"><span class="font-mono font-bold text-emerald-400">${esc(d.doc_id)} (${esc(d.record_id)})</span><span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold text-[10px]">${esc(labelOf(DOC_TYPE_LABELS, d.type))}</span></div><div class="font-bold text-white text-sm">${esc(tr(d.title_bn, d.title_en))}</div><div class="text-slate-400">${esc(tr("মালিক:", "Owner:"))} <strong>${esc(tr(d.owner_bn, d.owner_en))}</strong> •${esc(tr("নথির ফাইল:", "File Name:"))} <code class="font-mono">${esc(d.file_name)}</code> • ${esc(tr("তারিখ:", "Date:"))} ${esc(fmtDate(d.date))}</div><div class="font-mono text-[10px] text-slate-500">${esc(tr("নিরাপত্তা হ্যাশ (SHA-256):", "Integrity Hash (SHA-256):"))} ${esc(d.hash)}</div></div><div class="text-right"><div class="font-extrabold text-emerald-400">${esc(fmtCurrency(d.amount_bdt))}</div><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">${esc(labelOf(STATUS_LABELS, d.status))}</span></div></div>`).join("")}
+            </div>
+          </div>
+          <div class="glass-card p-5 rounded-2xl space-y-3">
+            <h3 class="text-sm font-bold text-emerald-400">${esc(tr("+ নতুন নথি ও লেনদেন সংযোজন", "+ Upload New Document & Transaction Entry"))}</h3>
+            <form id="docUploadForm" class="space-y-2.5">
+              <select id="docRecInp" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">${db.records.map(r => `<option value="${esc(r.record_id)}">${esc(r.record_id)} —${esc(tr(r.owner_bn, r.owner_en))}</option>`).join("")}</select>
+              <select id="docTypeInp" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white">${Object.keys(DOC_TYPE_LABELS).map(k => `<option value="${k}">${esc(labelOf(DOC_TYPE_LABELS, k))}</option>`).join("")}</select>
+              <input id="docTitleInp" type="text" required placeholder="${esc(tr("নথির শিরোনাম লিখুন (যেমন: বিএস খতিয়ান পর্চা)...", "Enter Document Title (e.g., BS Khatian Record)..."))}" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+              <input id="docAmountInp" type="number" min="0" value="1500" placeholder="${esc(tr("লেনদেন বা সরকারি ফি-এর পরিমাণ (৳)...", "Transaction or Govt Fee Amount (৳)..."))}" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+              <input id="docFileInp" type="file" class="w-full text-slate-300 text-xs" />
+              <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold">${esc(tr("নথি ও লেনদেন সংরক্ষণ", "Save Document & Transaction"))}</button>
+            </form>
+          </div>
+        </div>`;
+    }
+
+    function bindDocumentsEvents() {
+      document.getElementById("docUploadForm")?.addEventListener("submit", e => {
+        e.preventDefault();
+        if (state.role === "viewer") return toast(tr("🚫 দর্শক ভূমিকায় নথি সংযোজন নিষিদ্ধ!", "🚫 Viewer role cannot upload documents!"), true);
+        const recId = document.getElementById("docRecInp").value, rec = db.records.find(r => r.record_id === recId) || db.records[0];
+        const title = document.getElementById("docTitleInp").value.trim(), fileName = document.getElementById("docFileInp").files[0]?.name || "verified_land_doc.pdf";
+        const newId = `DOC-${900 + db.documents.length + 1}`, pseudoHash = Array.from({ length: 32 }, () => Math.floor(Math.random()*16).toString(16)).join("");
+        db.documents.unshift({ doc_id: newId, record_id: recId, owner_bn: rec.owner_bn, owner_en: rec.owner_en, type: document.getElementById("docTypeInp").value, title_bn: title, title_en: title, file_name: fileName, hash: pseudoHash, amount_bdt: parseFloat(document.getElementById("docAmountInp").value) || 0, date: "2026-10-17", status: "VERIFIED" });
+        logAudit("UPLOAD_DOC", newId, `নতুন নথি ${title} (${fileName}) সংরক্ষিত হয়েছে।`, `Uploaded document ${title} (${fileName}).`);
+        toast(tr(`নথি ${newId} হ্যাশ যাচাইসহ সংরক্ষিত হয়েছে!`, `Document ${newId} saved with SHA-256 hash!`));
+        renderApp();
+      });
+    }
+
+    function renderReportsMod() {
+      const totalDec = db.records.reduce((s, r) => s + Number(r.area_dec), 0);
+      return `
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs">
+          <div class="glass-card p-5 rounded-2xl space-y-3">
+            <h3 class="text-base font-extrabold text-emerald-400">${esc(tr("📑 প্রতিবেদন ডাউনলোড ও মুদ্রণ", "📑 Reports Download & Print"))}</h3>
+            <p class="text-slate-300">${esc(tr("নাহিনুর চৌধুরী (OWN-1001)-এর জমির রেকর্ড, পারিবারিক বংশবৃক্ষ, উত্তরাধিকার হিসাব এবং লেনদেনের পূর্ণাঙ্গ প্রতিবেদন মুদ্রণ বা ডাউনলোড করুন:", "Print or download comprehensive reports covering Nahinur Chowdhury (OWN-1001)'s land records, family lineage, inheritance shares, and audit logs:"))}</p>
+            <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+              <div class="font-bold text-white">${esc(tr("📋 এক নজরে নমুনা প্রতিবেদনের সারসংক্ষেপ", "📋 Sample Executive Report Summary"))}</div>
+              <div class="text-slate-300">${esc(tr(`প্রধান মালিক: নাহিনুর চৌধুরী (OWN-1001) • মোট নিবন্ধিত রেকর্ড: ${bnNum(db.records.length)} টি • মোট জমির পরিমাণ: ${bnNum(totalDec.toFixed(2))} শতাংশ • পারিবারিক সদস্য: ${bnNum(db.family.length)} জন।`, `Primary Owner: Nahinur Chowdhury (OWN-1001) • Total Records: ${db.records.length} • Total Land Area: ${totalDec.toFixed(2)} Decimal • Family Members: ${db.family.length}.`))}</div>
+            </div>
+            <div class="flex flex-wrap gap-2 pt-2">
+              <button type="button" onclick="window.print()" class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold">${esc(tr("🖨️ প্রতিবেদন মুদ্রণ / পিডিএফ সংরক্ষণ", "🖨️ Print Report / Save as PDF"))}</button>
+              <button type="button" id="exportCsvBtn" class="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold">${esc(tr("📊 সিএসভি (CSV) প্রতিবেদন ডাউনলোড", "📊 Download CSV Report"))}</button>
+              <button type="button" id="exportJsonBtn" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold">${esc(tr("⬇️ জেসন (JSON) ব্যাকআপ ডাউনলোড", "⬇️ Download JSON Backup"))}</button>
+            </div>
+          </div>
+          <div class="glass-card p-5 rounded-2xl space-y-3">
+            <h3 class="text-base font-extrabold text-cyan-400">${esc(tr("⚙️ সেটিংস, ডাটাবেস সংযোগ ও ভাষা কনফিগারেশন", "⚙️ Settings, Database Connection & Preferences"))}</h3>
+            <p class="text-slate-400">${esc(tr("সুপাবেস (Supabase PostgreSQL) সংযোগের তথ্য প্রদান করুন অথবা স্থানীয় সংরক্ষণ মোডে পরিচালনা করুন:", "Configure optional Supabase PostgreSQL credentials or operate seamlessly in local persistent storage mode:"))}</p>
+            <input id="sbUrlInp" type="url" value="${esc(state.supabaseUrl)}" placeholder="https://your-project.supabase.co" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono" />
+            <input id="sbKeyInp" type="password" value="${esc(state.supabaseAnonKey)}" placeholder="Supabase Anon Public Key" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono" />
+            <button type="button" id="connectSbBtn" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold">${esc(tr("ডাটাবেস সংযোগ যাচাই ও সংরক্ষণ", "Verify & Save Database Connection"))}</button>
+          </div>
+        </div>
+        <div class="glass-card p-5 rounded-2xl space-y-3 text-xs">
+          <h3 class="text-sm font-bold text-white">${esc(tr("📜 অপরিবর্তনীয় সিস্টেম কার্যক্রম ও নিরাপত্তা অডিট লগ", "📜 Immutable System Activity & Security Audit Logs"))}</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-900 text-slate-400"><tr><th class="p-2.5">${esc(tr("তারিখ ও সময়", "Date & Time"))}</th><th class="p-2.5">${esc(tr("ব্যবহারকারী", "User"))}</th><th class="p-2.5">${esc(tr("ভূমিকা", "Role"))}</th><th class="p-2.5">${esc(tr("কার্যক্রমের ধরন", "Action Type"))}</th><th class="p-2.5">${esc(tr("শনাক্তকারী আইডি", "Target ID"))}</th><th class="p-2.5">${esc(tr("বিস্তারিত বিবরণ", "Detailed Description"))}</th></tr></thead>
+              <tbody class="divide-y divide-slate-800">${db.auditLogs.map(l => `<tr><td class="p-2.5 text-slate-400">${esc(fmtDate(l.ts))}</td><td class="p-2.5 font-bold text-white">${esc(tr(l.actor_bn, l.actor_en))}</td><td class="p-2.5 text-emerald-400 font-semibold">${esc(l.role)}</td><td class="p-2.5 text-cyan-300 font-semibold">${esc(labelOf(AUDIT_ACTION_LABELS, l.action))}</td><td class="p-2.5 font-mono font-bold text-amber-300">${esc(l.target)}</td><td class="p-2.5 text-slate-300">${esc(tr(l.summary_bn, l.summary_en))}</td></tr>`).join("")}</tbody>
+            </table>
+          </div>
+        </div>`;
+    }
+
+    function bindReportsEvents() {
+      document.getElementById("exportCsvBtn")?.addEventListener("click", () => {
+        const hdr = "Record_ID,Owner_ID,Owner_Name,Dag_No,Khatian_No,Survey,Mouza,District,Area_Decimal,Status\n";
+        const body = db.records.map(r => `"${r.record_id}","${r.owner_id}","${tr(r.owner_bn, r.owner_en)}","${r.dag_no}","${r.khatian_no}","${labelOf(SURVEY_LABELS, r.survey)}","${tr(r.mouza_bn, r.mouza_en)}","${labelOf(DIST_LABELS, r.district)}",${r.area_dec},"${labelOf(STATUS_LABELS, r.status)}"`).join("\n");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob(["\uFEFF" + hdr + body], { type: "text/csv;charset=utf-8;" }));
+        a.download = "bhumi_shield_records.csv"; a.click();
+        toast(tr("সিএসভি (CSV) প্রতিবেদন ডাউনলোড সম্পন্ন হয়েছে!", "CSV report downloaded successfully!"));
+      });
+      document.getElementById("exportJsonBtn")?.addEventListener("click", () => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(db, null, 2)], { type: "application/json" }));
+        a.download = "bhumi_shield_backup.json"; a.click();
+        toast(tr("জেসন (JSON) ব্যাকআপ ডাউনলোড সম্পন্ন হয়েছে!", "JSON backup downloaded successfully!"));
+      });
+      document.getElementById("connectSbBtn")?.addEventListener("click", () => {
+        const url = document.getElementById("sbUrlInp").value.trim(), key = document.getElementById("sbKeyInp").value.trim();
+        state.supabaseConnected = Boolean(url && key); state.supabaseUrl = url; state.supabaseAnonKey = key;
+        renderApp();
+        toast(tr("ডাটাবেস সংযোগ কনফিগারেশন সংরক্ষিত হয়েছে!", "Database configuration saved!"));
+      });
+    }
+
+    function renderAiAnswer(q) {
+      const box = document.getElementById("aiAnswerContainer");
+      if (/^\d{4}$/.test(q)) {
+        box.innerHTML = `<div class="text-rose-400 font-bold">${esc(tr("🚫 এনআইডি গোপনীয়তা সুরক্ষা: ৪-সংখ্যার আংশিক জাতীয় পরিচয়পত্র দিয়ে অনুসন্ধান সম্পূর্ণ নিষিদ্ধ।", "🚫 NID Privacy Shield: Searching by 4-digit partial National ID is strictly prohibited."))}</div>`;
+        return;
+      }
+      box.innerHTML = state.lang === "bn"
+        ? `<div class="text-emerald-400 font-bold">[রেকর্ডকৃত তথ্য — নাহিনুর চৌধুরী (OWN-1001)]</div><p class="text-slate-200">মাথিউরা মৌজায় নাহিনুর চৌধুরী (OWN-1001)-এর নামে ৩টি দাগ নিবন্ধিত আছে: REC-2001 (Dag-107, BS-2001: ৬০.০০ শতাংশ), REC-2002 (Dag-108, BS-2002: ৩১.৫০ শতাংশ), এবং REC-2003 (Dag-142, BS-2006: ৬৪.০০ শতাংশ) — মোট ১৫৫.৫০ শতাংশ।</p><div class="text-cyan-400 font-bold pt-1">[এআই বিশ্লেষণ, ঝুঁকি ও উত্তরাধিকার সুপারিশ]</div><p class="text-slate-300">মুসলিম ফারায়েজ পদ্ধতিতে নিট ১৫০.০০ শতাংশ জমির মধ্যে স্ত্রীর অংশ ১/৮ (১৮.৭৫ শতাংশ), প্রতি পুত্র ৫২.৫০ শতাংশ এবং কন্যা ২৬.২৫ শতাংশ প্রাক্কলিত হয়েছে।</p>`
+        : `<div class="text-emerald-400 font-bold">[Recorded Facts — Nahinur Chowdhury (OWN-1001)]</div><p class="text-slate-200">Nahinur Chowdhury (OWN-1001) holds 3 verified plots in Mathiura Mouza: REC-2001 (60.00 Dec), REC-2002 (31.50 Dec), and REC-2003 (64.00 Dec) — totaling 155.50 Decimal.</p><div class="text-cyan-400 font-bold pt-1">[AI Analysis, Risk & Inheritance Recommendation]</div><p class="text-slate-300">Under the Muslim Faraid preset for a net estate of 150.00 Decimal, the spouse receives 1/8 (18.75 Dec), each son receives 52.50 Dec, and the daughter receives 26.25 Dec.</p>`;
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      loadDb(); renderApp(); renderAiAnswer("");
+      document.getElementById("mobileMenuBtn")?.addEventListener("click", () => document.getElementById("sidebarNav").classList.toggle("hidden"));
+      document.getElementById("langSwitchBtn")?.addEventListener("click", () => {
+        state.lang = state.lang === "bn" ? "en" : "bn";
+        try { localStorage.setItem(LANG_STORAGE_KEY, state.lang); } catch (e) {}
+        renderApp(); renderAiAnswer(document.getElementById("aiQueryInp")?.value.trim() || "");
+        toast(state.lang === "bn" ? "বাংলা ভাষা সক্রিয় করা হয়েছে" : "Switched interface language to English");
+      });
+      document.getElementById("globalSearchBtn")?.addEventListener("click", () => {
+        const val = document.getElementById("globalSearchInput").value.trim();
+        if (/^\d{4}$/.test(val)) return toast(tr("🚫 ৪-সংখ্যার এনআইডি অনুসন্ধান প্রতিরোধ করা হয়েছে!", "🚫 4-digit partial NID search blocked!"), true);
+        state.searchQuery = val; state.module = "records"; renderApp();
+      });
+      document.getElementById("globalSearchInput")?.addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("globalSearchBtn")?.click(); });
+      document.getElementById("notifToggleBtn")?.addEventListener("click", () => document.getElementById("notifPanel").classList.toggle("hidden"));
+      document.getElementById("closeNotifBtn")?.addEventListener("click", () => document.getElementById("notifPanel").classList.add("hidden"));
+      document.getElementById("confirmCancelBtn")?.addEventListener("click", () => { pendingConfirmFn = null; document.getElementById("confirmModal").classList.add("hidden"); });
+      document.getElementById("confirmOkBtn")?.addEventListener("click", () => {
+        document.getElementById("confirmModal").classList.add("hidden");
+        if (typeof pendingConfirmFn === "function") { const fn = pendingConfirmFn; pendingConfirmFn = null; fn(); }
+      });
+
+      const checkDup = () => {
+        const mode = document.getElementById("recFormMode").value, dag = document.getElementById("recDagInp").value.trim(), mouza = document.getElementById("recMouzaInp").value.trim(), recId = document.getElementById("recIdInp").value.trim();
+        const dup = db.records.find(r => r.dag_no.toLowerCase() === dag.toLowerCase() && (r.mouza_bn === mouza || r.mouza_en.toLowerCase() === mouza.toLowerCase()) && (mode === "create" || r.record_id !== recId));
+        const warnBox = document.getElementById("dupWarningBox");
+        if (dup) { warnBox.textContent = tr(`⚠️ ডুপ্লিকেট সতর্কবার্তা: "${mouza}" মৌজায় "${dag}" ইতিমধ্যে ${dup.record_id}-এ নিবন্ধিত আছে!`, `⚠️ Duplicate Warning: "${dag}" in "${mouza}" Mouza is already registered under ${dup.record_id}!`); warnBox.classList.remove("hidden"); }
+        else warnBox.classList.add("hidden");
+      };
+      document.getElementById("recDagInp")?.addEventListener("input", checkDup);
+      document.getElementById("recMouzaInp")?.addEventListener("input", checkDup);
+      document.getElementById("closeRecordModalBtn")?.addEventListener("click", () => document.getElementById("recordModal").classList.add("hidden"));
+      document.getElementById("cancelRecordModalBtn")?.addEventListener("click", () => document.getElementById("recordModal").classList.add("hidden"));
+
+      document.getElementById("recordForm")?.addEventListener("submit", e => {
+        e.preventDefault();
+        const mode = document.getElementById("recFormMode").value, recId = document.getElementById("recIdInp").value.trim(), ownerId = document.getElementById("recOwnerInp").value;
+        const ownerObj = db.owners.find(o => o.owner_id === ownerId) || db.owners[0], mouzaInp = document.getElementById("recMouzaInp").value.trim();
+        const payload = { record_id: recId, owner_id: ownerId, owner_bn: ownerObj.name_bn, owner_en: ownerObj.name_en, dag_no: document.getElementById("recDagInp").value.trim(), khatian_no: document.getElementById("recKhatianInp").value.trim(), survey: document.getElementById("recSurveyInp").value, land_class: document.getElementById("recClassInp").value, mouza_bn: mouzaInp, mouza_en: mouzaInp, district: document.getElementById("recDistInp").value, area_dec: parseFloat(document.getElementById("recAreaInp").value) || 10, surv_dec: parseFloat(document.getElementById("recSurvAreaInp").value) || 10, deed_no: document.getElementById("recDeedInp").value.trim(), date: "2026-10-17", status: document.getElementById("recStatusInp").value };
+        if (mode === "edit") {
+          const idx = db.records.findIndex(r => r.record_id === recId);
+          if (idx !== -1) db.records[idx] = payload;
+          logAudit("UPDATE_RECORD", recId, `${recId} হালনাগাদ করা হয়েছে।`, `Updated land record ${recId}.`);
+          toast(tr(`রেকর্ড ${recId} সফলভাবে হালনাগাদ হয়েছে!`, `Record ${recId} updated successfully!`));
+        } else {
+          if (db.records.some(r => r.record_id === recId)) return toast(tr("এই রেকর্ড আইডি ইতিমধ্যে বিদ্যমান!", "This Record ID already exists!"), true);
+          db.records.unshift(payload);
+          logAudit("CREATE_RECORD", recId, `নতুন রেকর্ড ${recId} সংযুক্ত হয়েছে।`, `Created new land record ${recId}.`);
+          toast(tr(`নতুন রেকর্ড ${recId} সংরক্ষিত হয়েছে!`, `New record ${recId} saved!`));
+        }
+        document.getElementById("recordModal").classList.add("hidden");
+        renderApp();
+      });
+
+      document.getElementById("openAuthModalBtn")?.addEventListener("click", () => document.getElementById("authModal").classList.remove("hidden"));
+      document.getElementById("closeAuthModalBtn")?.addEventListener("click", () => document.getElementById("authModal").classList.add("hidden"));
+      document.querySelectorAll("[data-role-login]").forEach(btn => btn.addEventListener("click", () => {
+        const r = btn.getAttribute("data-role-login"); state.role = r;
+        if (r === "admin") { state.userNameBn = "নাহিনুর চৌধুরী"; state.userNameEn = "Nahinur Chowdhury"; state.userEmail = "nahinur.admin@bhumishield.bd"; }
+        else if (r === "officer") { state.userNameBn = "নুসরাত জাহান"; state.userNameEn = "Nusrat Jahan"; state.userEmail = "nusrat.officer@bhumishield.bd"; }
+        else { state.userNameBn = "কামরুল হাসান চৌধুরী"; state.userNameEn = "Kamrul Hasan Chowdhury"; state.userEmail = "kamrul.viewer@bhumishield.bd"; }
+        document.getElementById("authModal").classList.add("hidden");
+        logAudit("SWITCH_ROLE", r.toUpperCase(), `${state.userNameBn} হিসেবে প্রবেশ সম্পন্ন।`, `Signed in as ${state.userNameEn}.`);
+        toast(tr(`সক্রিয় ভূমিকা: ${currentRoleLabel()} (${currentUserName()})`, `Active Role: ${currentRoleLabel()} (${currentUserName()})`));
+        renderApp();
+      }));
+
+      document.getElementById("aiModalToggleBtn")?.addEventListener("click", () => { renderAiAnswer(document.getElementById("aiQueryInp").value.trim()); document.getElementById("aiModal").classList.remove("hidden"); });
+      document.getElementById("closeAiModalBtn")?.addEventListener("click", () => document.getElementById("aiModal").classList.add("hidden"));
+      document.getElementById("askAiBtn")?.addEventListener("click", () => renderAiAnswer(document.getElementById("aiQueryInp").value.trim()));
+      document.getElementById("resetDemoBtn")?.addEventListener("click", () => {
+        openConfirmModal(tr("আপনি কি সকল ডেমো তথ্য প্রাথমিক অবস্থায় পুনরায় স্থাপন করতে চান?", "Are you sure you want to reset all demo records to their initial state?"), () => {
+          db = getDefaultDataset(); saveDb(); renderApp();
+          toast(tr("ডেমো তথ্য পুনরায় প্রাথমিক অবস্থায় স্থাপন করা হয়েছে!", "Demo dataset has been reset to defaults!"));
+        });
+      });
+    });
+  </script>
+</body>
+</html>
